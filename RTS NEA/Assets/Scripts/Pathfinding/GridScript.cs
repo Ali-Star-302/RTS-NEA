@@ -8,7 +8,7 @@ public class GridScript : MonoBehaviour
     public LayerMask grassMask;
     public LayerMask roadMask;
     public LayerMask unwalkableMask;
-    public Vector3 gridWorldSize;
+    Vector3 gridWorldSize;
     public float nodeRadius;
     public TerrainType[] walkableRegions;
     public int obstacleProximityPenalty = 10; //Penalty for being near unwalkable objects
@@ -26,6 +26,8 @@ public class GridScript : MonoBehaviour
 
     private void Awake()
     {
+        TerrainManager terrainManager = GameObject.Find("Terrain Manager").GetComponent<TerrainManager>();
+        gridWorldSize = new Vector3(terrainManager.mapSize * GenerationValues.GetChunkSize(), 100, terrainManager.mapSize * GenerationValues.GetChunkSize());
         raycastMask = grassMask | roadMask | unwalkableMask;
         nodeDiameter = nodeRadius * 2;
         gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);

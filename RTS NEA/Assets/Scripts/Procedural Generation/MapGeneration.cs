@@ -5,26 +5,21 @@ using UnityEngine;
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
 public class MapGeneration : MonoBehaviour
 {
-    [SerializeField]
-    NoiseMap noiseMap;
-
-    [SerializeField]
-    int mapLength, mapWidth;
-
-    [SerializeField]
-    float mapScale, heightScale;
-
-    [SerializeField]
-    TerrainRegion[] terrainRegions; //The 1D array of available terrains and their properties
-
+    public NoiseMap noiseMap;
+    public float mapScale, heightScale;
+    public TerrainRegion[] terrainRegions; //The 1D array of available terrains and their properties
     public AnimationCurve meshHeightCurve;
 
     MeshRenderer _meshRenderer;
     MeshFilter _meshFilter;
     MeshCollider _meshCollider;
 
+    int chunkSize;
+
     void Awake()
     {
+        chunkSize = GenerationValues.GetChunkSize();
+
         _meshRenderer = GetComponent<MeshRenderer>();
         _meshFilter = GetComponent<MeshFilter>();
         _meshCollider = GetComponent<MeshCollider>();
@@ -35,21 +30,20 @@ public class MapGeneration : MonoBehaviour
     ///<summary> Creates a terrain mesh using the perlin noise </summary>
     void GenerateTerrain()
     {
-        /*//Finds the length and width based on the size of the plane in the scene
-        Vector3[] meshVertices = this._meshFilter.mesh.vertices;
-        int mapLength = (int)Mathf.Sqrt(meshVertices.Length);
-        int mapWidth = mapLength;*/
+        float offsetX = -gameObject.transform.position.x;
+        float offsetZ = -gameObject.transform.position.z;
+
+        //Debug.Log(offsetX + ", " + offsetZ);
 
         //Finds the array of floats based on the perlin noise map
-        float[,] heightMap = noiseMap.GenerateNoiseMap(mapLength, mapWidth, this.mapScale);
+        float[,] heightMap = noiseMap.GenerateNoiseMap(chunkSize+1, mapScale, offsetX, offsetZ); //Chunk size needs to be 1 bigger as the number of vertices is 1 less than the size
 
         //Creates the texture from the array of floats
         Texture2D mapTexture = CreateColourTexture(heightMap);
         _meshRenderer.material.mainTexture = mapTexture;
 
-        MeshData _meshData;
-        _meshData = MeshGenerator.GenerateMesh(heightMap, heightScale, meshHeightCurve);
-        Mesh createdMesh = _meshFilter.sharedMesh = _meshData.CreateMesh();
+        Mesh createdMesh = MeshGenerator.GenerateMesh(heightMap, heightScale, meshHeightCurve);
+        _meshFilter.sharedMesh = createdMesh;
         _meshRenderer.sharedMaterial.mainTexture = mapTexture;
         _meshCollider.sharedMesh = createdMesh;
     }
@@ -60,15 +54,15 @@ public class MapGeneration : MonoBehaviour
         int mapLength = heightMap.GetLength(0); //Number of rows
         int mapWidth = heightMap.GetLength(1); //Number of columns
 
-        Color[] colourMap = new Color[mapLength * mapWidth]; //DONT UNDERSTAND THIS PART, NEEDS VIDEO HELP
+        Color[] colourMap = new Color[mapLength * mapWidth]; //Needs to be a 2D image flattened to a 1D array for the mapTexture.SetPixels part
         for (int z = 0; z < mapLength; z++)
         {
             for (int x = 0; x < mapWidth; x++)
             {
-                int currentPos = x * mapWidth + z;
+                int currentPos = x * mapWidth + z; //Finds the current position in a 1D array with 2D array coordinates
                 float currentHeight = heightMap[x, z]; //Sets current height in the loop equal to the one stored in the height map
 
-                TerrainRegion _terrainRegion = ChooseTerrainRegion(currentHeight); //
+                TerrainRegion _terrainRegion = ChooseTerrainRegion(currentHeight);
 
                 colourMap[currentPos] = _terrainRegion.colour;
             }
