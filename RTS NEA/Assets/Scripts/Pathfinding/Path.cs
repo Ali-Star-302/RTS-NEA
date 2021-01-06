@@ -4,42 +4,37 @@ using UnityEngine;
 
 public class Path
 {
-    public readonly Vector3[] lookPoints;
-    public readonly Line[] turnBoundaries;
-    public readonly int finishLineIndex;
-    public readonly int slowDownIndex;
+    public Vector3[] lookPoints;
+    public Line[] turnBoundaries;
+    public int targetIndex;
+    public int decelerateIndex;
 
-    public Path(Vector3[] waypoints, Vector3 startPos, float turnDst, float stoppindDst)
+    public Path(Vector3[] waypoints, Vector3 startPos, float turnDst, float stoppingDst)
     {
         lookPoints = waypoints;
         turnBoundaries = new Line[lookPoints.Length];
-        finishLineIndex = turnBoundaries.Length - 1;
+        targetIndex = turnBoundaries.Length - 1;
 
-        Vector2 previousPoint = V3ToV2(startPos);
+        Vector2 previousPoint = new Vector2(startPos.x, startPos.z);
         for (int i = 0; i < lookPoints.Length; i++)
         {
-            Vector2 currentPoint = V3ToV2(lookPoints[i]);
+            Vector2 currentPoint = new Vector2(lookPoints[i].x, lookPoints[i].z);
             Vector2 dirToCurrentPoint = (currentPoint - previousPoint).normalized;
-            Vector2 turnBoundaryPoint = (i == finishLineIndex)?currentPoint : currentPoint - dirToCurrentPoint * turnDst;
+            Vector2 turnBoundaryPoint = (i == targetIndex) ?currentPoint : currentPoint - dirToCurrentPoint * turnDst;
             turnBoundaries[i] = new Line(turnBoundaryPoint, previousPoint - dirToCurrentPoint * turnDst);
             previousPoint = turnBoundaryPoint;
         }
 
-        float dstFromEndPoint = 0;
+        float distanceFromTarget = 0;
         for (int i = lookPoints.Length-1; i > 0; i--)
         {
-            dstFromEndPoint += Vector3.Distance(lookPoints[i], lookPoints[i - 1]);
-            if (dstFromEndPoint > stoppindDst)
+            distanceFromTarget += Vector3.Distance(lookPoints[i], lookPoints[i - 1]);
+            if (distanceFromTarget > stoppingDst)
             {
-                slowDownIndex = i;
+                decelerateIndex = i;
                 break;
             }
         }
-    }
-
-    Vector2 V3ToV2(Vector3 v3)
-    {
-        return new Vector2(v3.x, v3.z);
     }
 
     public void DrawWithGizmos()

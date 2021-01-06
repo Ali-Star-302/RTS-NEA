@@ -26,9 +26,13 @@ public class CameraController : MonoBehaviour
     public Vector3 rotateStartPosition, rotateCurrentPosition;
 
     float verticalOffset;
+    float mapSize;
+    TerrainManager terrainManager;
 
     void Start()
     {
+        terrainManager = GameObject.Find("Terrain Manager").GetComponent<TerrainManager>();
+        mapSize = (terrainManager.mapSize * GenerationValues.GetChunkSize())/2;
         verticalOffset = transform.position.y;
         instance = this;
         newPosition = transform.position;
@@ -54,6 +58,28 @@ public class CameraController : MonoBehaviour
         {
             newPosition = new Vector3(followTransform.position.x, followTransform.position.y + verticalOffset, followTransform.position.z);
             followTransform = null;
+        }
+
+        Vector3 pos = transform.position;
+        pos.x = Mathf.Clamp(transform.position.x, -(mapSize + 10), mapSize + 10);
+        pos.z = Mathf.Clamp(transform.position.z, -(mapSize + 10), mapSize + 10);
+        transform.position = pos;
+        
+        if (transform.position.x > mapSize + 5 && !Input.GetButton("Horizontal"))
+        {
+            newPosition = new Vector3(mapSize - 5, transform.position.y, transform.position.z);
+        }
+        else if (transform.position.x < -(mapSize + 5) && !Input.GetButton("Horizontal"))
+        {
+            newPosition = new Vector3(-(mapSize - 5), transform.position.y, transform.position.z);
+        }
+        else if (transform.position.z > mapSize + 5 && !Input.GetButton("Vertical"))
+        {
+            newPosition = new Vector3(transform.position.x, transform.position.y, mapSize - 5);
+        }
+        else if (transform.position.z < -(mapSize + 5) && !Input.GetButton("Vertical"))
+        {
+            newPosition = new Vector3(transform.position.x, transform.position.y, -(mapSize - 5));
         }
     }
 
@@ -84,7 +110,11 @@ public class CameraController : MonoBehaviour
 
     void HandleMovementInput()
     {
-        if (Input.GetKey(KeyCode.LeftShift))
+        if (transform.position.x > mapSize || transform.position.x < -mapSize || transform.position.z > mapSize || transform.position.z < -mapSize)
+        {
+            movementSpeed = normalSpeed/4f;
+        }
+        else if (Input.GetKey(KeyCode.LeftShift))
         {
             movementSpeed = fastSpeed;
         }

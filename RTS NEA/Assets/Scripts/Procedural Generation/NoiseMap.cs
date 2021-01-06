@@ -22,7 +22,7 @@ public class NoiseMap : MonoBehaviour
 
                 noiseMap[x, z] = Mathf.PerlinNoise(currentX, currentZ);
 
-                if (x == 0 && z == 0 && _offsetX == 0 && _offsetZ == 0)
+                /*if (x == 0 && z == 0 && _offsetX == 0 && _offsetZ == 0)
                 {
                     Debug.Log("Middle tl: " + currentX + ", " + currentZ);
                     Debug.Log("Perlin:" + Mathf.PerlinNoise(currentX, currentZ));
@@ -31,7 +31,7 @@ public class NoiseMap : MonoBehaviour
                 {
                     Debug.Log("Right tl: " + currentX + ", " + currentZ);
                     Debug.Log("Perlin:" + Mathf.PerlinNoise(currentX, currentZ));
-                }
+                }*/
             }
         }
         

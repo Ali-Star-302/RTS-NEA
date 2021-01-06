@@ -75,10 +75,7 @@ public class Unit : MonoBehaviour
     IEnumerator FollowPath()
     {
         followingPath = true;
-        //ResetMovementPenalties();
-        //currentNode = null;
         int pathIndex = 0;
-        //transform.LookAt(path.lookPoints[0]);
         transform.LookAt(new Vector3(path.lookPoints[0].x,transform.position.y, path.lookPoints[0].z));
 
         float speedPercent = 1;
@@ -88,7 +85,7 @@ public class Unit : MonoBehaviour
             Vector2 pos2D = new Vector2(transform.position.x,transform.position.z);
             while (path.turnBoundaries[pathIndex].HasCrossedLine(pos2D))
             {
-                if (pathIndex == path.finishLineIndex)
+                if (pathIndex == path.targetIndex)
                 {
                     followingPath = false;
                     break;
@@ -101,9 +98,9 @@ public class Unit : MonoBehaviour
             {
                 speed = defaultSpeed - (gridScript.GetNodeInWorld(transform.position).movementPenalty)/2; //reduces speed from the default speed depending on the current nodes movement penalty
 
-                if (pathIndex >= path.slowDownIndex && stoppingDst > 0)
+                if (pathIndex >= path.decelerateIndex && stoppingDst > 0)
                 {
-                    speedPercent = Mathf.Clamp01(path.turnBoundaries[path.finishLineIndex].DistanceFromPoint(pos2D) / stoppingDst);
+                    speedPercent = Mathf.Clamp01(path.turnBoundaries[path.targetIndex].DistanceFromPoint(pos2D) / stoppingDst);
                     if (speedPercent < 0.01f)
                     {
                         followingPath = false;
