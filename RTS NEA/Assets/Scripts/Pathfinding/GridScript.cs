@@ -9,9 +9,9 @@ public class GridScript : MonoBehaviour
     public LayerMask roadMask;
     public LayerMask unwalkableMask;
     Vector3 gridWorldSize;
-    public float nodeRadius;
+    public float nodeRadius; //Don't change variable name, it throws an "overflow exception" somehow
     public TerrainType[] walkableRegions;
-    public int obstacleProximityPenalty = 10; //Penalty for being near unwalkable objects
+    public int unwalkablePenalty = 10; //Penalty for being near unwalkable objects
     public float steepnessLimit;
     LayerMask walkableMask;
     public Node[,] grid;
@@ -21,10 +21,10 @@ public class GridScript : MonoBehaviour
     int gridSizeX, gridSizeZ;
     int raycastMask;
 
-    int penaltyMin = int.MaxValue;
-    int penaltyMax = int.MinValue;
+    int minPenalty = int.MaxValue;
+    int maxPenalty = int.MinValue;
 
-    private void Awake()
+    void Awake()
     {
         TerrainManager terrainManager = GameObject.Find("Terrain Manager").GetComponent<TerrainManager>();
         gridWorldSize = new Vector3(terrainManager.mapSize * GenerationValues.GetChunkSize(), 100, terrainManager.mapSize * GenerationValues.GetChunkSize());
@@ -40,7 +40,7 @@ public class GridScript : MonoBehaviour
         }
     }
 
-    private void Start()
+    void Start()
     {
         CreateGrid();
     }
@@ -53,7 +53,7 @@ public class GridScript : MonoBehaviour
             displayGridGizmos = true;
     }
 
-    public int MaxSize
+    public int GetMaxSize
     {
         get
         {
@@ -61,10 +61,11 @@ public class GridScript : MonoBehaviour
         }
     }
 
+    ///<summary> Creates a grid of nodes used for pathfinding with unwalkable and walkable regions </summary>
     void CreateGrid()
     {
-        grid = new Node[gridSizeX, gridSizeZ]; //create 3d grid
-        Vector3 worldBottomLeft = transform.position - Vector3.right * gridWorldSize.x / 2 - Vector3.forward * gridWorldSize.z / 2; //gets bottom left point as a reference point
+        grid = new Node[gridSizeX, gridSizeZ]; //Create 3d grid
+        Vector3 worldBottomLeft = transform.position - Vector3.right * gridWorldSize.x / 2 - Vector3.forward * gridWorldSize.z / 2; //Gets bottom left point as a reference point
 
         for (int x = 0; x < gridSizeX; x++)
         {
@@ -74,128 +75,136 @@ public class GridScript : MonoBehaviour
                 bool walkable = !(Physics.CheckSphere(worldPoint, nodeRadius, unwalkableMask));
                 int movementPenalty = 0;
 
-                Ray regionsRay = new Ray(worldPoint + Vector3.up * 50, Vector3.down);
-                Ray ray = new Ray(worldPoint + Vector3.up * (gridWorldSize.y + 20), Vector3.down); //ray that fires at ground
-                RaycastHit hit;
-                if (Physics.Raycast(regionsRay, out hit, 100, walkableMask))
+                //Ray regionsRay = new Ray(worldPoint + Vector3.up * 50, Vector3.down);
+                Ray ray = new Ray(worldPoint + Vector3.up * (gridWorldSize.y + 20), Vector3.down); //Ray that fires at ground from up in the sky
+                if (Physics.Raycast(ray, out RaycastHit hit, 100, walkableMask))
                 {
-                    walkableRegionsDictionary.TryGetValue(hit.collider.gameObject.layer, out movementPenalty);
-                }
-
-                if (!walkable)
-                {
-                    movementPenalty += obstacleProximityPenalty;
+                    walkableRegionsDictionary.TryGetValue(hit.collider.gameObject.layer, out movementPenalty); //Gets the corresponding movement penalty from the terrain type
                 }
 
                 if (Physics.Raycast(ray, out hit, gridWorldSize.y + 50, raycastMask))
                 {
-                    bool _walkable;
-                    if (hit.transform.gameObject.layer == 8) //if the gameobject is on the unwalkable layer
-                        _walkable = false;
+                    if (hit.transform.gameObject.layer == 8) //If the gameobject is on the unwalkable layer it is set to unwalkable
+                        walkable = false;
                     else
-                        _walkable = true;
+                        walkable = true;
 
+                    //Sets nodes to unwalkable if too steep, otherwise the movement penalty is increased
                     float slopeAngle = Vector3.Angle(transform.up, hit.normal);
                     if (slopeAngle > steepnessLimit)
                     {
-                        _walkable = false;
+                        walkable = false;
                     }
                     else
                     {
                         movementPenalty += Mathf.RoundToInt(slopeAngle / 3);
                     }
-                    worldPoint = new Vector3(worldPoint.x, hit.point.y, worldPoint.z); //change worldpoint y position to the rays hit y position
-                    grid[x, z] = new Node(_walkable, worldPoint, x, Mathf.RoundToInt(hit.point.y), z, movementPenalty, slopeAngle);
+
+                    if (!walkable)
+                    {
+                        movementPenalty += unwalkablePenalty;
+                    }
+
+                    worldPoint = new Vector3(worldPoint.x, hit.point.y, worldPoint.z); //Change worldpoint y position to the ray's hit y position
+                    grid[x, z] = new Node(walkable, worldPoint, x, Mathf.RoundToInt(hit.point.y), z, movementPenalty, slopeAngle);
                 }
-                else //if there is no ground or obstacle to hit
+                else //If there is no ground or obstacle to hit
                 {
                     grid[x, z] = new Node(false, worldPoint, x, Mathf.RoundToInt(worldPoint.y), z, 1, 90);
                 }
             }
         }
 
-        BlurPenaltyMap(3);
+        BlurNodePenalties(3);
     }
-
-    void BlurPenaltyMap(int blurSize) //NEEDS REWRITING AND COMMENTS
+    ///<summary> Uses the box blur algorithm to blur the penalties of nodes </summary>
+    /// <param name="blurSize"> Dictates the amount of neighbouring nodes used to blur </param>
+    void BlurNodePenalties(int blurSize)
     {
-        int kernelSize = blurSize * 2 + 1;
-        int kernelExtents = (kernelSize - 1) / 2;
-        int[,] penaltiesHorizontalPass = new int[gridSizeX, gridSizeZ];
-        int[,] penaltiesVerticalPass = new int[gridSizeX, gridSizeZ];
+        int kernelSize = blurSize * 2 + 1; //Ensures the kernel size is always odd
+        int kernelBounds = (kernelSize - 1) / 2; //The number of nodes between the centre and the edge
+        int[,] horizontalPenalties = new int[gridSizeX, gridSizeZ]; //Stores the results of the first, horizontal iteration of all the nodes
+        int[,] verticalPenalties = new int[gridSizeX, gridSizeZ]; //Stores the results of the second, veritcal iteration of all the nodes
 
+        //First horizontal iteration goes through finding the horizontal total of each node in the grid array
         for (int z = 0; z < gridSizeZ; z++)
         {
-            for (int x = -kernelExtents; x <= kernelExtents; x++)
+            for (int x = -kernelBounds; x <= kernelBounds; x++)
             {
-                int sampleX = Mathf.Clamp(x, 0, kernelExtents);
-                penaltiesHorizontalPass[0, z] += grid[sampleX, z].movementPenalty;
+                int currentX = Mathf.Clamp(x, 0, kernelBounds);
+                horizontalPenalties[0, z] += grid[currentX, z].movementPenalty;
             }
             for (int x = 1; x < gridSizeX; x++)
             {
-                int removeIndex = Mathf.Clamp(x - kernelExtents - 1, 0, gridSizeX);
-                int addIndex = Mathf.Clamp(x + kernelExtents, 0, gridSizeX - 1);
+                int removeIndex = Mathf.Clamp(x - kernelBounds - 1, 0, gridSizeX); //The index of the node that will be removed from the total, just leaving the left edge
+                int addIndex = Mathf.Clamp(x + kernelBounds, 0, gridSizeX - 1); //The index of the node that will be added to the total on the right edge
 
-                penaltiesHorizontalPass[x, z] = penaltiesHorizontalPass[x - 1, z] - grid[removeIndex, z].movementPenalty + grid[addIndex, z].movementPenalty;
+                //The new penalty is the previous node, minus the penalty of the one leaving the kernel and plus the one entering the kernel
+                horizontalPenalties[x, z] = horizontalPenalties[x - 1, z] - grid[removeIndex, z].movementPenalty + grid[addIndex, z].movementPenalty; 
             }
         }
 
+        //Second vertical iteration goes through the horizontal penalties array, finding the vertical total of each node
         for (int x = 0; x < gridSizeX; x++)
         {
-            for (int y = -kernelExtents; y <= kernelExtents; y++)
+            for (int y = -kernelBounds; y <= kernelBounds; y++)
             {
-                int sampleY = Mathf.Clamp(y, 0, kernelExtents);
-                penaltiesVerticalPass[x, 0] += penaltiesHorizontalPass[x, sampleY];
+                int currentY = Mathf.Clamp(y, 0, kernelBounds);
+                verticalPenalties[x, 0] += horizontalPenalties[x, currentY];
             }
 
-            int blurredPenalty = Mathf.RoundToInt((float)penaltiesVerticalPass[x, 0] / (kernelSize * kernelSize));
+            int blurredPenalty = Mathf.RoundToInt((float)verticalPenalties[x, 0] / (kernelSize * kernelSize));
             grid[x, 0].movementPenalty = blurredPenalty;
 
             for (int z = 1; z < gridSizeZ; z++)
             {
-                int removeIndex = Mathf.Clamp(z - kernelExtents - 1, 0, gridSizeZ);
-                int addIndex = Mathf.Clamp(z + kernelExtents, 0, gridSizeZ - 1);
+                int removeIndex = Mathf.Clamp(z - kernelBounds - 1, 0, gridSizeZ);
+                int addIndex = Mathf.Clamp(z + kernelBounds, 0, gridSizeZ - 1);
 
-                penaltiesVerticalPass[x, z] = penaltiesVerticalPass[x, z - 1] - penaltiesHorizontalPass[x, removeIndex] + penaltiesHorizontalPass[x, addIndex];
-                blurredPenalty = Mathf.RoundToInt((float)penaltiesVerticalPass[x, z] / (kernelSize * kernelSize));
+                verticalPenalties[x, z] = verticalPenalties[x, z - 1] - horizontalPenalties[x, removeIndex] + horizontalPenalties[x, addIndex];
+
+                blurredPenalty = Mathf.RoundToInt(verticalPenalties[x, z] / (kernelSize * kernelSize)); //The final average of both iterations rounded to the closest integer
                 grid[x, z].movementPenalty = blurredPenalty;
 
-                if (blurredPenalty > penaltyMax)
-                    penaltyMax = blurredPenalty;
-                if (blurredPenalty < penaltyMin)
-                    penaltyMin = blurredPenalty;
+                if (blurredPenalty > maxPenalty)
+                    maxPenalty = blurredPenalty;
+                if (blurredPenalty < minPenalty)
+                    minPenalty = blurredPenalty;
             }
         }
     }
 
-    public List<Node> GetNeighbouringNodes(Node n)
+    ///<summary> Returns a list of the nodes neighbouring the inputted one </summary>
+    public List<Node> GetNeighbouringNodes(Node node)
     {
         List<Node> neighbours = new List<Node>();
 
-        for (int x = -1; x <= 1; x++) //iterates through all the neighbouring nodes
+        for (int x = -1; x <= 1; x++) //Iterates through all the neighbouring nodes
         {
             for (int y = -1; y <= 1; y++)
             {
-                if (x == 0 && y == 0) //skip this node because it's the centre node of the 3x3
+                if (x == 0 && y == 0) //Skip this node because it's the centre node of the 3x3
                     continue;
 
-                int checkX = n.gridX + x;
-                int checkY = n.gridZ + y;
+                int currentX = node.gridX + x;
+                int currentY = node.gridZ + y;
 
-                if (checkX >= 0 && checkX < gridSizeX && checkY >= 0 && checkY < gridSizeZ) //ensures the x or y coordinate is valid
+                if (currentX >= 0 && currentX < gridSizeX && currentY >= 0 && currentY < gridSizeZ) //Ensures the x or y coordinate is valid
                 {
-                    neighbours.Add(grid[checkX, checkY]);
+                    neighbours.Add(grid[currentX, currentY]);
                 }
             }
         }
         return neighbours;
     }
 
-    public Node GetNodeInWorld(Vector3 worldPos)
+    ///<summary> Returns a node in the grid from a world position </summary>
+    public Node GetNodeInWorld(Vector3 worldPosition)
     {
-        //calculates what percentage the world position is in the grid
-        Vector2 posPercentages = new Vector2((worldPos.x + gridWorldSize.x / 2) / gridWorldSize.x, (worldPos.z + gridWorldSize.z / 2) / gridWorldSize.z);
-        //ensure its not outside the precentage range of 0-1
+        //Calculates what percentage the world position is in the grid
+        Vector2 posPercentages = new Vector2((worldPosition.x + gridWorldSize.x / 2) / gridWorldSize.x, (worldPosition.z + gridWorldSize.z / 2) / gridWorldSize.z);
+
+        //Ensure its not outside the percentage range of 0-1
         posPercentages.x = Mathf.Clamp01(posPercentages.x);
         posPercentages.y = Mathf.Clamp01(posPercentages.y);
 
@@ -212,7 +221,7 @@ public class GridScript : MonoBehaviour
             foreach (Node n in grid)
             {
                 if (n.walkable)
-                    Gizmos.color = Color.Lerp(Color.white, Color.black, Mathf.InverseLerp(penaltyMin, penaltyMax, n.movementPenalty));
+                    Gizmos.color = Color.Lerp(Color.white, Color.black, Mathf.InverseLerp(minPenalty, maxPenalty, n.movementPenalty));
                 else
                     Gizmos.color = Color.red;
                 Gizmos.DrawCube(n.worldPosition, Vector3.one * (nodeDiameter/1.2f));

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    public static CameraController instance;
+    public static CameraController cameraInstance;
 
     public Transform followTransform;
     public Transform cameraTransform;
@@ -22,7 +22,7 @@ public class CameraController : MonoBehaviour
     public Quaternion newRotation;
     public Vector3 newZoom;
 
-    public Vector3 dragStartPosition, dragCurrentPosition;
+    //public Vector3 dragStartPosition, dragCurrentPosition;
     public Vector3 rotateStartPosition, rotateCurrentPosition;
 
     float verticalOffset;
@@ -34,7 +34,7 @@ public class CameraController : MonoBehaviour
         terrainManager = GameObject.Find("Terrain Manager").GetComponent<TerrainManager>();
         mapSize = (terrainManager.mapSize * GenerationValues.GetChunkSize())/2;
         verticalOffset = transform.position.y;
-        instance = this;
+        cameraInstance = this;
         newPosition = transform.position;
         newRotation = transform.rotation;
         newZoom = cameraTransform.localPosition;
@@ -42,7 +42,8 @@ public class CameraController : MonoBehaviour
 
     void Update()
     {
-        newZoom.y = Mathf.Clamp(newZoom.y, minZoom, maxZoom);
+        /*
+        //Follows an object unless there isnt a target to follow
         if (followTransform != null)
         {
             transform.position = followTransform.position;
@@ -50,21 +51,32 @@ public class CameraController : MonoBehaviour
         }
         else
         {
-            HandleMouseInput();
-            HandleMovementInput();
+            MouseInput();
+            KeyboardInput();
         }
         
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             newPosition = new Vector3(followTransform.position.x, followTransform.position.y + verticalOffset, followTransform.position.z);
             followTransform = null;
-        }
+        }*/
+    }
 
-        Vector3 pos = transform.position;
-        pos.x = Mathf.Clamp(transform.position.x, -(mapSize + 10), mapSize + 10);
-        pos.z = Mathf.Clamp(transform.position.z, -(mapSize + 10), mapSize + 10);
-        transform.position = pos;
-        
+    void LateUpdate() //Uses late update to ensure the camera is moved after all other code has been executed, reducing potential jitteriness
+    {
+        MouseInput();
+        KeyboardInput();
+
+        //Ensures the camera isn't too far or too close
+        newZoom.y = Mathf.Clamp(newZoom.y, minZoom, maxZoom);
+
+        //Clamps the camera position to just outside the map's bounds
+        Vector3 position = transform.position;
+        position.x = Mathf.Clamp(transform.position.x, -(mapSize + 10), mapSize + 10);
+        position.z = Mathf.Clamp(transform.position.z, -(mapSize + 10), mapSize + 10);
+        transform.position = position;
+
+        //If slightly outside the map's bounds it will snap the camera back inside if the movement key is released
         if (transform.position.x > mapSize + 5 && !Input.GetButton("Horizontal"))
         {
             newPosition = new Vector3(mapSize - 5, transform.position.y, transform.position.z);
@@ -83,15 +95,16 @@ public class CameraController : MonoBehaviour
         }
     }
 
-
-    void HandleMouseInput()
+    void MouseInput()
     {
-        //Zoom with scroll
+        //Zoom with scroll wheel
         if(Input.mouseScrollDelta.y != 0)
         {
             newZoom += Input.mouseScrollDelta.y * zoomAmount * 2;
         }
 
+        #region Mouse rotation
+        /*
         //Rotate using middle mouse
         if (Input.GetMouseButtonDown(2))
         {
@@ -104,17 +117,19 @@ public class CameraController : MonoBehaviour
             Vector3 difference = rotateStartPosition - rotateCurrentPosition;
             rotateStartPosition = rotateCurrentPosition;
             newRotation *= Quaternion.Euler(Vector3.up * (-difference.x / 5f));
-        }
+        }*/
+        #endregion
     }
 
 
-    void HandleMovementInput()
+    void KeyboardInput()
     {
+        //Reduces movement speed when outside the map's bounds
         if (transform.position.x > mapSize || transform.position.x < -mapSize || transform.position.z > mapSize || transform.position.z < -mapSize)
         {
             movementSpeed = normalSpeed/4f;
         }
-        else if (Input.GetKey(KeyCode.LeftShift))
+        else if (Input.GetKey(KeyCode.LeftShift)) //Fast movement mode when pressing left shift
         {
             movementSpeed = fastSpeed;
         }
@@ -126,6 +141,7 @@ public class CameraController : MonoBehaviour
         newPosition += Input.GetAxis("Vertical") * transform.forward * movementSpeed;
         newPosition += Input.GetAxis("Horizontal") * transform.right * movementSpeed;
 
+        //Rotation
         if (Input.GetKey(KeyCode.Q))
         {
             newRotation *= Quaternion.Euler(Vector3.up * -rotationAmount);
@@ -135,6 +151,7 @@ public class CameraController : MonoBehaviour
             newRotation *= Quaternion.Euler(Vector3.up * rotationAmount);
         }
 
+        //Zoom
         if (Input.GetKey(KeyCode.R))
         {
             newZoom += zoomAmount;
@@ -144,6 +161,7 @@ public class CameraController : MonoBehaviour
             newZoom -= zoomAmount;
         }
 
+        //Update position, zoom and rotation
         transform.position = Vector3.Lerp(transform.position, newPosition, Time.deltaTime * movementTime);
         transform.rotation = Quaternion.Lerp(transform.rotation, newRotation, Time.deltaTime * movementTime);
         cameraTransform.localPosition = Vector3.Lerp(cameraTransform.localPosition, newZoom, Time.deltaTime * movementTime);

@@ -7,35 +7,43 @@ public class UnitSelection : MonoBehaviour
     public List<GameObject> selectedUnits;
 
     bool isSelecting = false;
-    Vector3 pos1;
-    Vector3 pos2;
+    Vector3 position1;
+    Vector3 position2;
     RaycastHit hit;
 
     //Mesh variables
     public MeshCollider selectionBox = new MeshCollider();
     Mesh selectionMesh;
-    Vector2[] corners;
-    Vector3[] verts;
+    Vector2[] boxCorners;
+    Vector3[] vertices;
 
+    //Layer mask variables
     int grassMask = 1 << 10;
     int roadMask = 1 << 9;
     int groundMask;
 
     private void Awake()
     {
+        //Sets the ground mask to be the grass or road masks
         groundMask = grassMask | roadMask;
     }
 
     void Update()
     {
+        UnitSelect();
+    }
+
+    ///<summary> Checks for all the methods in which a unit can be selected </summary>
+    void UnitSelect()
+    {
         if (Input.GetMouseButtonDown(0))
         {
-            pos1 = Input.mousePosition;
+            position1 = Input.mousePosition;
         }
         if (Input.GetMouseButton(0))
         {
             //Checks if the player is dragging and not just clicking
-            if ((pos1 - Input.mousePosition).magnitude > 40)
+            if ((position1 - Input.mousePosition).magnitude > 40)
             {
                 isSelecting = true;
             }
@@ -46,33 +54,13 @@ public class UnitSelection : MonoBehaviour
             //Selecting a single unit
             if (isSelecting == false)
             {
-                Ray ray = Camera.main.ScreenPointToRay(pos1);
+                Ray ray = Camera.main.ScreenPointToRay(position1);
                 //Selectable layer mask
                 int selectableMask = 1 << 11;
 
                 if (Physics.Raycast(ray, out hit, 5000f, selectableMask))
                 {
-                    //Selecting multiple units individually
-                    if (Input.GetKey(KeyCode.LeftShift))
-                    {
-                        if (selectedUnits.Contains(hit.transform.gameObject))
-                            Deselect(hit.transform.gameObject);
-                        else
-                            Select(hit.transform.gameObject);
-                    }
-                    else
-                    {
-                        //Clears selected units and selects a new one
-                        if (selectedUnits.Contains(hit.transform.gameObject))
-                        {
-                            DeselectAll();
-                        }
-                        else
-                        {
-                            DeselectAll();
-                            Select(hit.transform.gameObject);
-                        }
-                    }
+                    IndividualSelect();
                 }
                 else
                 {
@@ -87,76 +75,110 @@ public class UnitSelection : MonoBehaviour
             //Box selecting units
             else
             {
-                verts = new Vector3[4];
-                int i = 0;
-                pos2 = Input.mousePosition;
-                corners = GetBoundingBox(pos1, pos2);
-
-                foreach (Vector2 corner in corners)
-                {
-                    Ray ray = Camera.main.ScreenPointToRay(corner);
-
-                    if (Physics.Raycast(ray, out hit, 50000.0f, groundMask))
-                    {
-                        verts[i] = new Vector3(hit.point.x, 0, hit.point.z);
-                        Debug.DrawLine(Camera.main.ScreenToWorldPoint(corner), hit.point, Color.red, 1.0f);
-                    }
-                    i++;
-                }
-
-                //generate the mesh
-                selectionMesh = GenerateBoxMesh(verts);
-                selectionBox = this.gameObject.AddComponent<MeshCollider>();
-                selectionBox.sharedMesh = selectionMesh;
-                selectionBox.convex = true;
-                selectionBox.isTrigger = true;
+                BoxSelect();
 
                 //Deselect all units when left shift isnt pressed
                 if (!Input.GetKey(KeyCode.LeftShift))
                 {
                     DeselectAll();
                 }
-                
+
                 Destroy(selectionBox, 0.02f);
             }
             isSelecting = false;
         }
 
         if (selectedUnits.Count > 0)
-        {
             UpdateCentreOfGroup();
+    }
+
+    /// <summary> Selects a single unit or adds single units to the selected units list </summary>
+    void IndividualSelect()
+    {
+        //Selecting multiple units individually with left shift
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+            if (selectedUnits.Contains(hit.transform.gameObject))
+                Deselect(hit.transform.gameObject);
+            else
+                Select(hit.transform.gameObject);
+        }
+        else
+        {
+            //Clears selected units and selects a new one
+            if (selectedUnits.Contains(hit.transform.gameObject))
+            {
+                DeselectAll();
+            }
+            else
+            {
+                DeselectAll();
+                Select(hit.transform.gameObject);
+            }
         }
     }
 
+    /// <summary> Selects all units within a box mesh created from the on-screen rectangle </summary>
+    void BoxSelect()
+    {
+        vertices = new Vector3[4];
+        int i = 0;
+        position2 = Input.mousePosition;
+        boxCorners = GetBoundingBox(position1, position2);
+
+        foreach (Vector2 corner in boxCorners)
+        {
+            Ray ray = Camera.main.ScreenPointToRay(corner);
+
+            if (Physics.Raycast(ray, out hit, 50000.0f, groundMask))
+            {
+                vertices[i] = new Vector3(hit.point.x, 0, hit.point.z);
+                Debug.DrawLine(Camera.main.ScreenToWorldPoint(corner), hit.point, Color.red, 1.0f);
+            }
+            i++;
+        }
+
+        //Generate the mesh which encapsulates the units
+        selectionMesh = GenerateBoxMesh(vertices);
+        selectionBox = gameObject.AddComponent<MeshCollider>();
+        selectionBox.sharedMesh = selectionMesh;
+        selectionBox.convex = true;
+        selectionBox.isTrigger = true;
+    }
+
+    /// <summary> Deselects all units </summary>
     void DeselectAll()
     {
-        foreach (GameObject g in selectedUnits)
+        foreach (GameObject unit in selectedUnits)
         {
-            if (g.GetComponent<SelectedUnit>())
-                Destroy(g.GetComponent<SelectedUnit>());
+            if (unit.GetComponent<SelectedUnit>())
+                Destroy(unit.GetComponent<SelectedUnit>());
         }
         selectedUnits.Clear();
     }
 
-    void Deselect(GameObject g)
+    /// <summary> Deselects the given unit </summary>
+    void Deselect(GameObject unit)
     {
-        if (g.GetComponent<SelectedUnit>())
-            Destroy(g.GetComponent<SelectedUnit>());
-        selectedUnits.Remove(g);
+        if (unit.GetComponent<SelectedUnit>())
+            Destroy(unit.GetComponent<SelectedUnit>());
+        selectedUnits.Remove(unit);
     }
 
-    void Select(GameObject g)
+    /// <summary> Selects the given unit if it is not already selected </summary>
+    void Select(GameObject unit)
     {
         SelectedUnit s;
-        if (!g.GetComponent<SelectedUnit>())
+        if (!unit.GetComponent<SelectedUnit>())
         {
-            s = g.AddComponent<SelectedUnit>();
+            s = unit.AddComponent<SelectedUnit>();
         }
-        if (!selectedUnits.Contains(g))
-            selectedUnits.Add(g);
+        if (!selectedUnits.Contains(unit))
+            selectedUnits.Add(unit);
     }
 
-    Vector3 CalculateCentreOfGroup() //calculates average of positions of a group of units
+    /// <summary> Calculates average vector3 of positions of a group of units </summary>
+    Vector3 CalculateCentreOfGroup()
     {
         if (selectedUnits.Count < 1)
             return Vector3.zero;
@@ -181,7 +203,7 @@ public class UnitSelection : MonoBehaviour
         }
     }
 
-    //Creates a bounding box (4 corners in order) from the start and end mouse position
+    /// <summary> Creates a bounding box (4 boxCorners in order) from the start and end mouse position </summary>
     Vector2[] GetBoundingBox(Vector2 p1, Vector2 p2)
     {
         Vector2 newP1;
@@ -226,30 +248,31 @@ public class UnitSelection : MonoBehaviour
 
         }
 
-        Vector2[] corners = { newP1, newP2, newP3, newP4 };
-        return corners;
+        Vector2[] boxCorners = { newP1, newP2, newP3, newP4 };
+        return boxCorners;
 
     }
 
-    //Generates a mesh from the bottom 4 corners defined in the bounding box
-    Mesh GenerateBoxMesh(Vector3[] corners)
+    /// <summary> Generates a mesh from the bottom 4 boxCorners defined in the bounding box </summary>
+    Mesh GenerateBoxMesh(Vector3[] boxCorners)
     {
-        Vector3[] verts = new Vector3[8];
-        int[] tris = { 0, 1, 2, 2, 1, 3, 4, 6, 0, 0, 6, 2, 6, 7, 2, 2, 7, 3, 7, 5, 3, 3, 5, 1, 5, 0, 1, 1, 4, 0, 4, 5, 6, 6, 5, 7 }; //Order of triangle formation from points
+        Vector3[] vertices = new Vector3[8];
+        int[] triangles = { 0, 1, 2, 2, 1, 3, 4, 6, 0, 0, 6, 2, 6, 7, 2, 2, 7, 3, 7, 5, 3, 3, 5, 1, 5, 0, 1, 1, 4, 0, 4, 5, 6, 6, 5, 7 }; //Order of triangle formation from points
 
         for (int i = 0; i < 4; i++)
         {
-            verts[i] = corners[i];
+            vertices[i] = boxCorners[i];
         }
 
+        //Makes the corners of the top face 100 units above the corners of the bottom face
         for (int j = 4; j < 8; j++)
         {
-            verts[j] = corners[j - 4] + Vector3.up * 100.0f;
+            vertices[j] = boxCorners[j - 4] + Vector3.up * 100;
         }
 
         Mesh selectionMesh = new Mesh();
-        selectionMesh.vertices = verts;
-        selectionMesh.triangles = tris;
+        selectionMesh.vertices = vertices;
+        selectionMesh.triangles = triangles;
 
         return selectionMesh;
     }
@@ -259,9 +282,9 @@ public class UnitSelection : MonoBehaviour
         //Draws box when dragging
         if (isSelecting)
         {
-            var rect = Utilities.GetScreenRectangle(pos1, Input.mousePosition);
-            Utilities.DrawRectangle(rect, new Color(0.8f, 0.8f, 0.95f, 0.25f));
-            Utilities.DrawRectangleBorder(rect, 2, new Color(0.8f, 0.8f, 0.95f));
+            var rect = Utilities.GetScreenRectangle(position1, Input.mousePosition);
+            Utilities.DrawRectangle(rect, new Color(0.65f, 0.65f, 0.95f, 0.15f));
+            Utilities.DrawRectangleBorder(rect, 1, new Color(0.65f, 0.65f, 0.75f));
         }
     }
 

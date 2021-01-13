@@ -22,7 +22,7 @@ public class Pathfinding : MonoBehaviour
 
         if (startNode.walkable && targetNode.walkable)
         {
-            Heap<Node> openList = new Heap<Node>(grid.MaxSize); //nodes that need to be checked
+            Heap<Node> openList = new Heap<Node>(grid.GetMaxSize); //nodes that need to be checked
             HashSet<Node> closedList = new HashSet<Node>(); //nodes that have been checked
             openList.Add(startNode);
 

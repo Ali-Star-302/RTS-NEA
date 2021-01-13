@@ -4,11 +4,14 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Audio;
 using TMPro;
+using UnityEngine.UI;
 
 public class MainMenuManager : MonoBehaviour
 {
     public AudioMixer audioMixer;
     public TMP_Dropdown resolutionDropdown;
+    public TMP_Dropdown graphicsDropdown;
+    public Toggle fullscreenToggle;
 
     Resolution[] resolutions;
 
@@ -26,6 +29,20 @@ public class MainMenuManager : MonoBehaviour
         }
 
         resolutionDropdown.AddOptions(resolutionOptions);
+
+        fullscreenToggle.isOn = Screen.fullScreen;
+
+        //Set the value thats in the dropdown to the current resolution
+        int resolutionIndex = 0;
+        for (int i = 0; i < resolutionDropdown.options.Count; i++)
+        {
+            if (resolutions[i].width + " x " + resolutions[i].height == Screen.currentResolution.width + " x " + Screen.currentResolution.height)
+                resolutionIndex = i;
+        }
+        resolutionDropdown.value = resolutionIndex;
+
+        //Set the value thats in the dropdown to the current quality setting
+        graphicsDropdown.value = QualitySettings.GetQualityLevel();
     }
 
 
