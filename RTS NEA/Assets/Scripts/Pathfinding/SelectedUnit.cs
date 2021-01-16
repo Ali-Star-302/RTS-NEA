@@ -14,7 +14,7 @@ public class SelectedUnit : MonoBehaviour
         GetComponent<Renderer>().material.color = Color.green;
     }
 
-    private void Update()
+    void Update()
     {
         if (Input.GetMouseButtonDown(1))
         {
@@ -24,24 +24,26 @@ public class SelectedUnit : MonoBehaviour
             {
                 targetPosition = hit.point;
                 targetPosition = new Vector3(targetPosition.x, targetPosition.y + 3, targetPosition.z);
-                if ((centreOfGroup - transform.position).sqrMagnitude > 3)
-                    this.gameObject.SendMessage("UpdatePath", targetPosition + CalculateOffset());
+
+                if (Input.GetKey(KeyCode.C))
+                    gameObject.SendMessage("UpdatePath", targetPosition + CalculateOffset(true)); //Calls the UpdatePath method from the Unit script, passing in the target position with an offset
                 else
-                    this.gameObject.SendMessage("UpdatePath", targetPosition);
+                    gameObject.SendMessage("UpdatePath", targetPosition + CalculateOffset(false));
             }
         }
     }
 
-    Vector3 CalculateOffset() //needs improvement
+    Vector3 CalculateOffset(bool closeTogether) //Needs improvement
     {
         Vector3 baseOffset = transform.position - centreOfGroup;
-        if (baseOffset.sqrMagnitude > 45)
+
+        if (closeTogether && baseOffset.sqrMagnitude > 45)
             return baseOffset.normalized * 3;
         else
             return baseOffset;
     }
 
-    private void OnDestroy()
+    void OnDestroy()
     {
         GetComponent<Renderer>().material.color = defaultColour;
     }

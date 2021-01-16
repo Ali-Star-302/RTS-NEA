@@ -3,8 +3,9 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
-    const float minPathUpdateTime = 0.2f;
-    const float pathUpdateMoveThreshold = 0.5f;
+    const float minPathUpdateTime = 0.5f;
+    const float pathDifference = 0.5f;
+    float pathDifferenceSqr;
 
     public Transform target;
     public float speed = 15;
@@ -12,34 +13,61 @@ public class Unit : MonoBehaviour
     public float turnDst = 5;
     public float stoppingDst = 10f;
     public int groupingPenalty;
+    public Transform groundCheck;
 
     public bool selected = false;
     bool followingPath;
 
     Path path;
     bool displayPathGizmos;
-    public const float gravity = -9.81f;
+    const float gravity = -9.81f;
     float defaultSpeed;
+    int groundMask;
 
     GridScript gridScript;
 
-    private void Awake()
+    void Awake()
     {
         defaultSpeed = speed;
         gridScript = GameObject.Find("A*").GetComponent<GridScript>();
+        pathDifferenceSqr = pathDifference * pathDifference;
+        groundMask = ~LayerMask.GetMask("Selectable");
     }
 
-    private void Update()
+    void Update()
     {
         if (Input.GetKeyDown("x") && displayPathGizmos == true)
             displayPathGizmos = false;
         else if (Input.GetKeyDown("x") && displayPathGizmos == false)
             displayPathGizmos = true;
 
-        GetComponent<Rigidbody>().velocity += new Vector3(0, gravity * Time.deltaTime, 0);
+        //If the unit is off the ground it applies gravity
+        if (!Physics.CheckSphere(groundCheck.position,0.5f, groundMask))
+            GetComponent<Rigidbody>().velocity += new Vector3(0, gravity * Time.deltaTime, 0);
     }
 
-    public void OnPathFound(Vector3[] waypoints, bool pathSuccessful)
+    ///<summary> Updates the path starting from its new position to the target </summary>
+    IEnumerator UpdatePath(Vector3 target)
+    {
+        PathServer.RequestPath(new PathRequest(transform.position, target, PathFound));
+
+        Vector3 targetPositionOld = target;
+
+        while (true)
+        {
+            yield return new WaitForSeconds(minPathUpdateTime); //Ensures it doesn't update path every frame
+
+            //If the difference between the new and old target is big enough, the path is updated
+            if ((target - targetPositionOld).sqrMagnitude > pathDifferenceSqr)
+            {
+                PathServer.RequestPath(new PathRequest(transform.position, target, PathFound));
+                targetPositionOld = target;
+            }
+        }
+    }
+
+    ///<summary> Creates a path from the given waypoints and runs FollowPath </summary>
+    public void PathFound(Vector3[] waypoints, bool pathSuccessful)
     {
         if (pathSuccessful)
         {
@@ -48,30 +76,8 @@ public class Unit : MonoBehaviour
             StartCoroutine("FollowPath");
         }
     }
-    IEnumerator UpdatePath(Vector3 target)
-    {
-        //Waits for the editor to load properly
-        if (Time.timeSinceLevelLoad < 0.3f)
-        {
-            yield return new WaitForSeconds(0.3f);
-        }
 
-        PathRequestManager.RequestPath(new PathRequest(transform.position, target, OnPathFound));   //NEEDS REWRITING AND COMMENTS
-
-        float sqrMoveThreshold = pathUpdateMoveThreshold * pathUpdateMoveThreshold;
-        Vector3 targetPosOld = target;
-
-        while (true)
-        {
-            yield return new WaitForSeconds(minPathUpdateTime);
-            if ((target - targetPosOld).sqrMagnitude > sqrMoveThreshold)
-            {
-                PathRequestManager.RequestPath(new PathRequest(transform.position, target, OnPathFound));
-                targetPosOld = target;
-            }
-        }
-    }
-
+    ///<summary> Follows the path that has been created </summary>
     IEnumerator FollowPath()
     {
         followingPath = true;
@@ -82,8 +88,7 @@ public class Unit : MonoBehaviour
 
         while (followingPath)
         {
-            Vector2 pos2D = new Vector2(transform.position.x,transform.position.z);
-            while (path.turnBoundaries[pathIndex].HasCrossedLine(pos2D))
+            while (path.turnBoundaries[pathIndex].HasCrossedLine(new Vector2(transform.position.x, transform.position.z)))
             {
                 if (pathIndex == path.targetIndex)
                 {
@@ -96,11 +101,11 @@ public class Unit : MonoBehaviour
 
             if (followingPath)
             {
-                speed = defaultSpeed - (gridScript.GetNodeInWorld(transform.position).movementPenalty)/2; //reduces speed from the default speed depending on the current nodes movement penalty
+                speed = defaultSpeed - (gridScript.GetNodeFromPosition(transform.position).movementPenalty)/2; //Reduces speed from the default speed depending on the current node's movement penalty
 
                 if (pathIndex >= path.decelerateIndex && stoppingDst > 0)
                 {
-                    speedPercent = Mathf.Clamp01(path.turnBoundaries[path.targetIndex].DistanceFromPoint(pos2D) / stoppingDst);
+                    speedPercent = Mathf.Clamp01(path.turnBoundaries[path.targetIndex].DistanceFromPoint(new Vector2(transform.position.x, transform.position.z)) / stoppingDst);
                     if (speedPercent < 0.01f)
                     {
                         followingPath = false;

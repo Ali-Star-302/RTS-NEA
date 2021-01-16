@@ -4,14 +4,13 @@ using UnityEngine;
 using System;
 using System.Threading;
 
-public class PathRequestManager : MonoBehaviour
+public class PathServer : MonoBehaviour
 {
-
     Queue<PathResult> results = new Queue<PathResult>();
-    static PathRequestManager instance;
+    static PathServer instance;
     Pathfinding pathfinding;
 
-    private void Awake()
+    void Awake()
     {
         instance = this;
         pathfinding = GetComponent<Pathfinding>();
@@ -33,13 +32,13 @@ public class PathRequestManager : MonoBehaviour
         }
     }
 
-    public static void RequestPath(PathRequest request)
+    public static void RequestPath(PathRequest pathRequest)
     {
-        ThreadStart threadStart = delegate
+        ThreadStart ts = delegate
         {
-            instance.pathfinding.FindPath(request, instance.FinishedProcessingPath);
+            instance.pathfinding.FindPath(pathRequest, instance.FinishedProcessingPath);
         };
-        threadStart.Invoke();
+        ts();
     }
 
     public void FinishedProcessingPath(PathResult result)
@@ -51,21 +50,21 @@ public class PathRequestManager : MonoBehaviour
     }
 }
 
-public struct PathResult
+public class PathResult
 {
     public Vector3[] path;
     public bool success;
     public Action<Vector3[], bool> callback;
 
-    public PathResult(Vector3[] path, bool success, Action<Vector3[], bool> callback)
+    public PathResult(Vector3[] _path, bool _success, Action<Vector3[], bool> _callback)
     {
-        this.path = path;
-        this.success = success;
-        this.callback = callback;
+        this.path = _path;
+        this.success = _success;
+        this.callback = _callback;
     }
 }
 
-public struct PathRequest
+public class PathRequest
 {
     public Vector3 pathStart;
     public Vector3 pathEnd;

@@ -199,7 +199,7 @@ public class GridScript : MonoBehaviour
     }
 
     ///<summary> Returns a node in the grid from a world position </summary>
-    public Node GetNodeInWorld(Vector3 worldPosition)
+    public Node GetNodeFromPosition(Vector3 worldPosition)
     {
         //Calculates what percentage the world position is in the grid
         Vector2 posPercentages = new Vector2((worldPosition.x + gridWorldSize.x / 2) / gridWorldSize.x, (worldPosition.z + gridWorldSize.z / 2) / gridWorldSize.z);
