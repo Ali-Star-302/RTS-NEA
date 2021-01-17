@@ -5,21 +5,28 @@ using System;
 
 public class Pathfinding : MonoBehaviour
 {
+    PathfindingManager pathServer;
     GridScript grid;
 
     void Awake()
     {
+        pathServer = GetComponent<PathfindingManager>();
         grid = GetComponent<GridScript>();
     }
 
+    public void BeginPathfinding(Vector3 startPos, Vector3 targetPos)
+    {
+        StartCoroutine(FindPath(startPos, targetPos));
+    }
+
     ///<summary> Finds a path using the A* algorithm </summary>
-    public void FindPath(PathRequest request, Action<PathResult> callback)
+    public IEnumerator FindPath(Vector3 startPos, Vector3 targetPos)
     {
         Vector3[] waypoints = new Vector3[0];
         bool pathSuccess = false;
 
-        Node startNode = grid.GetNodeFromPosition(request.pathStart);
-        Node targetNode = grid.GetNodeFromPosition(request.pathEnd);
+        Node startNode = grid.GetNodeFromPosition(startPos);
+        Node targetNode = grid.GetNodeFromPosition(targetPos);
 
         if (startNode.walkable && targetNode.walkable)
         {
@@ -60,13 +67,15 @@ public class Pathfinding : MonoBehaviour
                 }
             }
         }
+        yield return null;
+
         //If a path is found the path is reversed and simplified
         if (pathSuccess)
         {
             waypoints = CreateFinalPath(startNode, targetNode);
             pathSuccess = waypoints.Length > 0;
         }
-        callback(new PathResult(waypoints, pathSuccess, request.callback));
+        pathServer.FinishedProcessingPath(waypoints, pathSuccess);
 
     }
 
