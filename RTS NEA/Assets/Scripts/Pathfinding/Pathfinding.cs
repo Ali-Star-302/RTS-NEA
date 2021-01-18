@@ -5,12 +5,12 @@ using System;
 
 public class Pathfinding : MonoBehaviour
 {
-    PathfindingManager pathServer;
+    PathfindingManager pathfindingManager;
     GridScript grid;
 
     void Awake()
     {
-        pathServer = GetComponent<PathfindingManager>();
+        pathfindingManager = GetComponent<PathfindingManager>();
         grid = GetComponent<GridScript>();
     }
 
@@ -75,7 +75,8 @@ public class Pathfinding : MonoBehaviour
             waypoints = CreateFinalPath(startNode, targetNode);
             pathSuccess = waypoints.Length > 0;
         }
-        pathServer.FinishedProcessingPath(waypoints, pathSuccess);
+
+        pathfindingManager.FinishedPath(waypoints, pathSuccess); //Sends the completed data to the pathfinding manager
 
     }
 

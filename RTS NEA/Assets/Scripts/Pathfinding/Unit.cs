@@ -49,7 +49,7 @@ public class Unit : MonoBehaviour
     ///<summary> Updates the path starting from its new position to the target </summary>
     public IEnumerator UpdatePath(Vector3 target)
     {
-        PathfindingManager.RequestPath(transform.position, target, PathFound);
+        PathfindingManager.GetPath(transform.position, target, this);
 
         Vector3 targetPositionOld = target;
 
@@ -60,7 +60,7 @@ public class Unit : MonoBehaviour
             //If the difference between the new and old target is big enough, the path is updated
             if ((target - targetPositionOld).sqrMagnitude > pathDifferenceSqr)
             {
-                PathfindingManager.RequestPath(transform.position, target, PathFound);
+                PathfindingManager.GetPath(transform.position, target, this);
                 targetPositionOld = target;
             }
         }
@@ -72,8 +72,11 @@ public class Unit : MonoBehaviour
         if (pathSuccessful)
         {
             path = new Path(waypoints, transform.position,turnDst, stoppingDst);
-            StopCoroutine("FollowPath");
-            StartCoroutine("FollowPath");
+
+            //StopCoroutine("FollowPath");
+            //StartCoroutine("FollowPath");
+            StopAllCoroutines();
+            StartCoroutine(FollowPath());
         }
     }
 

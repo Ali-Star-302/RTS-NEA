@@ -5,12 +5,11 @@ using System;
 
 public class PathfindingManager : MonoBehaviour
 {
+    static PathfindingManager instance;
+
     Queue<PathData> pathQueue = new Queue<PathData>();
     PathData currentPathData;
-
-    static PathfindingManager instance;
     Pathfinding pathfinding;
-
     bool processing;
 
     void Awake()
@@ -19,44 +18,30 @@ public class PathfindingManager : MonoBehaviour
         pathfinding = GetComponent<Pathfinding>();
     }
 
-    ///<summary> Requests a new path which is put in the path queue </summary>
-    public static void RequestPath(Vector3 pathStart, Vector3 pathEnd, Action<Vector3[], bool> callback)
+    ///<summary> Gets a new path which is put in the path queue </summary>
+    public static void GetPath(Vector3 pathStart, Vector3 pathEnd, Unit unitInstance)
     {
-        PathData path = new PathData(pathStart, pathEnd, callback);
+        PathData path = new PathData(pathStart, pathEnd, unitInstance);
         instance.pathQueue.Enqueue(path);
         instance.ProcessNextPath();
+    }
+
+    ///<summary> Sends the finished path back to the unit which requested a path and moves on to the next path </summary>
+    public void FinishedPath(Vector3[] path, bool success)
+    {
+        currentPathData.unitInstance.GetComponent<Unit>().PathFound(path, success);
+        processing = false;
+        ProcessNextPath();
     }
 
     ///<summary> If available, the next path in the queue is processed </summary>
     void ProcessNextPath()
     {
-        if (!processing && pathQueue.Count > 0)
+        if (pathQueue.Count > 0 && !processing)
         {
             currentPathData = pathQueue.Dequeue();
             processing = true;
-            StartCoroutine(pathfinding.FindPath(currentPathData.pathStart, currentPathData.pathEnd));
-        }
-    }
-
-    public void FinishedProcessingPath(Vector3[] path, bool success)
-    {
-        currentPathData.callback(path, success);
-        processing = false;
-        ProcessNextPath();
-    }
-
-    ///<summary> Class which holds all data needed to create a path </summary>
-    class PathData
-    {
-        public Vector3 pathStart;
-        public Vector3 pathEnd;
-        public Action<Vector3[], bool> callback;
-
-        public PathData(Vector3 _start, Vector3 _end, Action<Vector3[], bool> _callback)
-        {
-            pathStart = _start;
-            pathEnd = _end;
-            callback = _callback;
+            StartCoroutine(pathfinding.FindPath(currentPathData.pathStart, currentPathData.pathEnd)); //Begins the process of finding a path for the specific unit
         }
     }
 }
