@@ -19,7 +19,7 @@ public class PathfindingManager : MonoBehaviour
         pathfinding = GetComponent<Pathfinding>();
     }
 
-    ///<summary> Allows a path to be requested </summary>
+    ///<summary> Requests a new path which is put in the path queue </summary>
     public static void RequestPath(Vector3 pathStart, Vector3 pathEnd, Action<Vector3[], bool> callback)
     {
         PathData path = new PathData(pathStart, pathEnd, callback);
@@ -27,13 +27,14 @@ public class PathfindingManager : MonoBehaviour
         instance.ProcessNextPath();
     }
 
+    ///<summary> If available, the next path in the queue is processed </summary>
     void ProcessNextPath()
     {
         if (!processing && pathQueue.Count > 0)
         {
             currentPathData = pathQueue.Dequeue();
             processing = true;
-            pathfinding.BeginPathfinding(currentPathData.pathStart, currentPathData.pathEnd);
+            StartCoroutine(pathfinding.FindPath(currentPathData.pathStart, currentPathData.pathEnd));
         }
     }
 

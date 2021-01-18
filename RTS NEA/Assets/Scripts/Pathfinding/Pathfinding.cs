@@ -14,10 +14,10 @@ public class Pathfinding : MonoBehaviour
         grid = GetComponent<GridScript>();
     }
 
-    public void BeginPathfinding(Vector3 startPos, Vector3 targetPos)
+    /*public void BeginPathfinding(Vector3 startPos, Vector3 targetPos)
     {
         StartCoroutine(FindPath(startPos, targetPos));
-    }
+    }*/
 
     ///<summary> Finds a path using the A* algorithm </summary>
     public IEnumerator FindPath(Vector3 startPos, Vector3 targetPos)

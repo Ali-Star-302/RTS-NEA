@@ -47,7 +47,7 @@ public class Unit : MonoBehaviour
     }
 
     ///<summary> Updates the path starting from its new position to the target </summary>
-    IEnumerator UpdatePath(Vector3 target)
+    public IEnumerator UpdatePath(Vector3 target)
     {
         PathfindingManager.RequestPath(transform.position, target, PathFound);
 

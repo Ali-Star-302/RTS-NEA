@@ -8,8 +8,12 @@ public class SelectedUnit : MonoBehaviour
     Vector3 targetPosition;
     public Vector3 centreOfGroup;
 
+    Unit unitScript;
+
     void Start()
     {
+        unitScript = GetComponent<Unit>();
+
         defaultColour = GetComponent<Renderer>().material.color;
         GetComponent<Renderer>().material.color = Color.green;
     }
@@ -26,9 +30,9 @@ public class SelectedUnit : MonoBehaviour
                 targetPosition = new Vector3(targetPosition.x, targetPosition.y + 3, targetPosition.z);
 
                 if (Input.GetKey(KeyCode.C))
-                    gameObject.SendMessage("UpdatePath", targetPosition + CalculateOffset(true)); //Calls the UpdatePath method from the Unit script, passing in the target position with an offset
+                    StartCoroutine(unitScript.UpdatePath(targetPosition + CalculateOffset(true))); //Calls the UpdatePath method from the Unit script, passing in the target position with an offset
                 else
-                    gameObject.SendMessage("UpdatePath", targetPosition + CalculateOffset(false));
+                    StartCoroutine(unitScript.UpdatePath(targetPosition + CalculateOffset(false)));
             }
         }
     }
