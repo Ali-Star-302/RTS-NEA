@@ -34,7 +34,7 @@ public class Node : IHeapItem<Node>
         }
     }
 
-    public int HeapIndex
+    public int GetHeapIndex
     {
         get
         {

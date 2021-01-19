@@ -73,8 +73,6 @@ public class Unit : MonoBehaviour
         {
             path = new Path(waypoints, transform.position,turnDst, stoppingDst);
 
-            //StopCoroutine("FollowPath");
-            //StartCoroutine("FollowPath");
             StopAllCoroutines();
             StartCoroutine(FollowPath());
         }

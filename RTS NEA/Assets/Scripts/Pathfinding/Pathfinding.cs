@@ -14,11 +14,6 @@ public class Pathfinding : MonoBehaviour
         grid = GetComponent<GridScript>();
     }
 
-    /*public void BeginPathfinding(Vector3 startPos, Vector3 targetPos)
-    {
-        StartCoroutine(FindPath(startPos, targetPos));
-    }*/
-
     ///<summary> Finds a path using the A* algorithm </summary>
     public IEnumerator FindPath(Vector3 startPos, Vector3 targetPos)
     {
@@ -47,23 +42,24 @@ public class Pathfinding : MonoBehaviour
 
                 foreach (Node _node in grid.GetNeighbouringNodes(currentNode))
                 {
-                    //Skip node if its not walkable or is already in the closed set
-                    if (!_node.walkable || closedList.Contains(_node))
-                        continue;
-
-                    //Update neighbour variables if there is a quicker path or if its already been checked
-                    int updatedScoreToNeighbour = currentNode.gScore + GetDistance(currentNode, _node) + _node.movementPenalty;
-                    if (updatedScoreToNeighbour < _node.gScore || !openList.Contains(_node))
+                    //Only updates the node if it is walkable and isn't already in the closed set
+                    if (_node.walkable && !closedList.Contains(_node))
                     {
-                        _node.gScore = updatedScoreToNeighbour;
-                        _node.hScore = GetDistance(_node, targetNode);
-                        _node.parent = currentNode;
+                        //Update neighbour variables if there is a quicker path or if its already been checked
+                        int updatedScoreToNeighbour = currentNode.gScore + GetDistance(currentNode, _node) + _node.movementPenalty;
+                        if (updatedScoreToNeighbour < _node.gScore || !openList.Contains(_node))
+                        {
+                            _node.gScore = updatedScoreToNeighbour;
+                            _node.hScore = GetDistance(_node, targetNode);
+                            _node.parent = currentNode;
 
-                        if (!openList.Contains(_node))
-                            openList.Add(_node);
-                        else
-                            openList.UpdateItem(_node);
+                            if (!openList.Contains(_node))
+                                openList.Add(_node);
+                            else
+                                openList.UpdateItem(_node);
+                        }
                     }
+                        
                 }
             }
         }
