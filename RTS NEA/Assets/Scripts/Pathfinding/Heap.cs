@@ -3,35 +3,35 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-public class Heap<T> where T : IHeapItem<T>
+public class Heap<Node> where Node : IHeapElement<Node>
 {
-    T[] items;
-    int currentItemCount;
+    Node[] items;
+    int itemCount;
 
     public Heap(int maxHeapSize)
     {
-        items = new T[maxHeapSize];
+        items = new Node[maxHeapSize];
     }
 
-    public void Add(T item)
+    public void Add(Node item)
     {
-        item.GetHeapIndex = currentItemCount;
-        items[currentItemCount] = item;
+        item.GetHeapIndex = itemCount;
+        items[itemCount] = item;
         SortUp(item);
-        currentItemCount++;
+        itemCount++;
     }
 
-    public T RemoveFirst()
+    public Node RemoveFirst()
     {
-        T firstItem = items[0];
-        currentItemCount--;
-        items[0] = items[currentItemCount];
+        Node firstItem = items[0];
+        itemCount--;
+        items[0] = items[itemCount];
         items[0].GetHeapIndex = 0;
         SortDown(items[0]);
         return firstItem;
     }
 
-    public void UpdateItem(T item)
+    public void UpdateItem(Node item)
     {
         SortUp(item);
     }
@@ -40,16 +40,16 @@ public class Heap<T> where T : IHeapItem<T>
     {
         get
         {
-            return currentItemCount;
+            return itemCount;
         }
     }
 
-    public bool Contains(T item)
+    public bool Contains(Node item)
     {
         return Equals(items[item.GetHeapIndex], item);
     }
 
-    void SortDown(T item)
+    void SortDown(Node item)
     {
         while (true)
         {
@@ -57,10 +57,10 @@ public class Heap<T> where T : IHeapItem<T>
             int childIndexRight = item.GetHeapIndex * 2 + 2;
             int swapIndex = 0;
 
-            if (childIndexLeft < currentItemCount)
+            if (childIndexLeft < itemCount)
             {
                 swapIndex = childIndexLeft;
-                if (childIndexRight < currentItemCount)
+                if (childIndexRight < itemCount)
                 {
                     if (items[childIndexLeft].CompareTo(items[childIndexRight]) < 0)
                     {
@@ -84,12 +84,12 @@ public class Heap<T> where T : IHeapItem<T>
         }
     }
 
-    void SortUp(T item)
+    void SortUp(Node item)
     {
         int parentIndex = (item.GetHeapIndex - 1) / 2;
         while (true)
         {
-            T parentItem = items[parentIndex];
+            Node parentItem = items[parentIndex];
             if (item.CompareTo(parentItem) > 0)
             {
                 Swap(item, parentItem);
@@ -101,7 +101,7 @@ public class Heap<T> where T : IHeapItem<T>
         }
     }
 
-    void Swap(T itemA, T itemB)
+    void Swap(Node itemA, Node itemB)
     {
         items[itemA.GetHeapIndex] = itemB;
         items[itemB.GetHeapIndex] = itemA;
@@ -111,7 +111,7 @@ public class Heap<T> where T : IHeapItem<T>
     }
 }
 
-public interface IHeapItem<T> : IComparable<T>
+public interface IHeapElement<T> : IComparable<T>
 {
     int GetHeapIndex
     {

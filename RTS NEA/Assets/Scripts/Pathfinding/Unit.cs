@@ -5,25 +5,23 @@ public class Unit : MonoBehaviour
 {
     const float minPathUpdateTime = 0.5f;
     const float pathDifference = 0.5f;
-    float pathDifferenceSqr;
+    const float gravity = -9.81f;
+    
 
     public Transform target;
-    public float speed = 15;
-    public float turnSpeed = 3f;
-    public float turnDst = 5;
-    public float stoppingDst = 10f;
-    public int groupingPenalty;
     public Transform groundCheck;
-
+    public float speed = 15f;
+    public float stoppingDistance = 5f;
+    public float turnSpeed = 3f;
+    public float turnRadius = 5f;
     public bool selected = false;
+  
     bool followingPath;
-
-    Path path;
     bool displayPathGizmos;
-    const float gravity = -9.81f;
+    float pathDifferenceSqr;
     float defaultSpeed;
     int groundMask;
-
+    Path path;
     GridScript gridScript;
 
     void Awake()
@@ -71,7 +69,7 @@ public class Unit : MonoBehaviour
     {
         if (pathSuccessful)
         {
-            path = new Path(waypoints, transform.position,turnDst, stoppingDst);
+            path = new Path(waypoints, transform.position,turnRadius, stoppingDistance);
 
             StopAllCoroutines();
             StartCoroutine(FollowPath());
@@ -83,7 +81,7 @@ public class Unit : MonoBehaviour
     {
         followingPath = true;
         int pathIndex = 0;
-        transform.LookAt(new Vector3(path.lookPoints[0].x,transform.position.y, path.lookPoints[0].z));
+        transform.LookAt(new Vector3(path.waypoints[0].x,transform.position.y, path.waypoints[0].z));
 
         float speedPercent = 1;
 
@@ -91,7 +89,8 @@ public class Unit : MonoBehaviour
         {
             while (path.turnBoundaries[pathIndex].HasCrossedLine(new Vector2(transform.position.x, transform.position.z)))
             {
-                if (pathIndex == path.targetIndex)
+                //Stops following if the end of the path is reached
+                if (pathIndex == path.turnBoundaries.Length - 1)
                 {
                     followingPath = false;
                     break;
@@ -104,16 +103,17 @@ public class Unit : MonoBehaviour
             {
                 speed = defaultSpeed - (gridScript.GetNodeFromPosition(transform.position).movementPenalty)/2; //Reduces speed from the default speed depending on the current node's movement penalty
 
-                if (pathIndex >= path.decelerateIndex && stoppingDst > 0)
+                //When the unit 
+                if (pathIndex >= path.decelerationPoint && stoppingDistance > 0)
                 {
-                    speedPercent = Mathf.Clamp01(path.turnBoundaries[path.targetIndex].DistanceFromPoint(new Vector2(transform.position.x, transform.position.z)) / stoppingDst);
+                    speedPercent = Mathf.Clamp01(path.turnBoundaries[path.turnBoundaries.Length - 1].DistanceFromPoint(new Vector2(transform.position.x, transform.position.z)) / stoppingDistance);
                     if (speedPercent < 0.01f)
                     {
                         followingPath = false;
                     }
                 }
 
-                Quaternion targetRotation = Quaternion.LookRotation(new Vector3(path.lookPoints[pathIndex].x, transform.position.y, path.lookPoints[pathIndex].z) - transform.position);
+                Quaternion targetRotation = Quaternion.LookRotation(new Vector3(path.waypoints[pathIndex].x, transform.position.y, path.waypoints[pathIndex].z) - transform.position);
                 transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * turnSpeed);
                 transform.Translate(Vector3.forward * Time.deltaTime * speed * speedPercent, Space.Self);
             }

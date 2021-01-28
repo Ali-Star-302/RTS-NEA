@@ -4,43 +4,51 @@ using UnityEngine;
 
 public class Path
 {
-    public Vector3[] lookPoints;
+    public int decelerationPoint;
+    public Vector3[] waypoints;
     public Line[] turnBoundaries;
-    public int targetIndex;
-    public int decelerateIndex;
-
-    public Path(Vector3[] waypoints, Vector3 startPos, float turnDst, float stoppingDst)
+    
+    ///<summary> Path class used for the when the unit follows the path </summary>
+    public Path(Vector3[] _waypoints, Vector3 startPosition, float turnRadius, float stoppingDistance)
     {
-        lookPoints = waypoints;
-        turnBoundaries = new Line[lookPoints.Length];
-        targetIndex = turnBoundaries.Length - 1;
+        waypoints = _waypoints;
+        turnBoundaries = new Line[waypoints.Length];
 
-        Vector2 previousPoint = new Vector2(startPos.x, startPos.z);
-        for (int i = 0; i < lookPoints.Length; i++)
+        Vector2 previousPoint = new Vector2(startPosition.x, startPosition.z); //Ensures the previous point is the start point at the start of the path
+        for (int i = 0; i < waypoints.Length; i++)
         {
-            Vector2 currentPoint = new Vector2(lookPoints[i].x, lookPoints[i].z);
-            Vector2 dirToCurrentPoint = (currentPoint - previousPoint).normalized;
-            Vector2 turnBoundaryPoint = (i == targetIndex) ?currentPoint : currentPoint - dirToCurrentPoint * turnDst;
-            turnBoundaries[i] = new Line(turnBoundaryPoint, previousPoint - dirToCurrentPoint * turnDst);
-            previousPoint = turnBoundaryPoint;
+            Vector2 currentLocation = new Vector2(waypoints[i].x, waypoints[i].z);
+            Vector2 currentDirection = (currentLocation - previousPoint).normalized;
+            Vector2 turnLocation;
+
+            //When the current location is the target, the unit doesn't need to turn
+            if (i == turnBoundaries.Length - 1)
+                turnLocation = currentLocation;
+            else
+                turnLocation = currentLocation - currentDirection * turnRadius;
+
+            turnBoundaries[i] = new Line(turnLocation, previousPoint - currentDirection * turnRadius);
+            previousPoint = turnLocation;
         }
 
         float distanceFromTarget = 0;
-        for (int i = lookPoints.Length-1; i > 0; i--)
+        //Iterates from the target waypoint backwards summing the distance between each waypoint, finding the index where the unit should start decelerating
+        for (int i = waypoints.Length-1; i > 0; i--)
         {
-            distanceFromTarget += Vector3.Distance(lookPoints[i], lookPoints[i - 1]);
-            if (distanceFromTarget > stoppingDst)
+            distanceFromTarget += Vector3.Distance(waypoints[i], waypoints[i - 1]);
+            if (stoppingDistance < distanceFromTarget)
             {
-                decelerateIndex = i;
+                decelerationPoint = i;
                 break;
             }
         }
     }
 
+
     public void DrawWithGizmos()
     {
         Gizmos.color = Color.black;
-        foreach (Vector3 p in lookPoints)
+        foreach (Vector3 p in waypoints)
         {
             Gizmos.DrawCube(p + Vector3.up, Vector3.one);
         }

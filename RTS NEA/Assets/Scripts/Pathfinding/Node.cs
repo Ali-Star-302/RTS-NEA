@@ -2,16 +2,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Node : IHeapItem<Node>
+public class Node : IHeapElement<Node>
 {
-    public bool walkable;
     public Vector3 worldPosition;
-    public int gridX, gridY, gridZ;
+    public bool walkable;
     public int movementPenalty;
-
+    public Node parent;
+    public int gridX, gridY, gridZ;
     public int gScore;
     public int hScore;
-    public Node parent;
+    
     int heapIndex;
     float steepness;
 
