@@ -15,7 +15,7 @@ public class Unit : MonoBehaviour
     public float turnSpeed = 3f;
     public float turnRadius = 5f;
     public bool selected = false;
-  
+
     bool followingPath;
     bool displayPathGizmos;
     float pathDifferenceSqr;
@@ -23,6 +23,8 @@ public class Unit : MonoBehaviour
     int groundMask;
     Path path;
     GridScript gridScript;
+
+    Vector3 pathTarget;
 
     void Awake()
     {
@@ -58,6 +60,7 @@ public class Unit : MonoBehaviour
             //If the difference between the new and old target is big enough, the path is updated
             if ((target - targetPositionOld).sqrMagnitude > pathDifferenceSqr)
             {
+                pathTarget = target;
                 PathfindingManager.GetPath(transform.position, target, this);
                 targetPositionOld = target;
             }
@@ -79,8 +82,8 @@ public class Unit : MonoBehaviour
     ///<summary> Follows the path that has been created </summary>
     IEnumerator FollowPath()
     {
-        followingPath = true;
         int pathIndex = 0;
+        followingPath = true;
         transform.LookAt(new Vector3(path.waypoints[0].x,transform.position.y, path.waypoints[0].z));
 
         float speedPercent = 1;
@@ -103,8 +106,8 @@ public class Unit : MonoBehaviour
             {
                 speed = defaultSpeed - (gridScript.GetNodeFromPosition(transform.position).movementPenalty)/2; //Reduces speed from the default speed depending on the current node's movement penalty
 
-                //When the unit 
-                if (pathIndex >= path.decelerationPoint && stoppingDistance > 0)
+                //When the unit passes the deceleration point it slows down
+                if (pathIndex >= path.decelerationPoint)
                 {
                     speedPercent = Mathf.Clamp01(path.turnBoundaries[path.turnBoundaries.Length - 1].DistanceFromPoint(new Vector2(transform.position.x, transform.position.z)) / stoppingDistance);
                     if (speedPercent < 0.01f)

@@ -6,7 +6,7 @@ public class Path
 {
     public int decelerationPoint;
     public Vector3[] waypoints;
-    public Line[] turnBoundaries;
+    public Line[] turnBoundaries; //Array of lines which are where the unit begins to turn
     
     ///<summary> Path class used for the when the unit follows the path </summary>
     public Path(Vector3[] _waypoints, Vector3 startPosition, float turnRadius, float stoppingDistance)
