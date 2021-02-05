@@ -3,34 +3,29 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
-    const float minPathUpdateTime = 0.5f;
-    const float pathDifference = 0.5f;
     const float gravity = -9.81f;
-    
 
     public Transform target;
     public Transform groundCheck;
-    public float speed = 15f;
-    public float stoppingDistance = 5f;
-    public float turnSpeed = 3f;
-    public float turnRadius = 5f;
-    public bool selected = false;
+    protected float speed = 15f;
+    protected float stoppingDistance = 5f;
+    protected float turnSpeed = 3f;
+    protected float turnRadius = 5f;
+    protected bool selected = false;
 
     bool followingPath;
     bool displayPathGizmos;
-    float pathDifferenceSqr;
     float defaultSpeed;
     int groundMask;
     Path path;
-    GridScript gridScript;
+    GridManager gridScript;
 
     Vector3 pathTarget;
 
     void Awake()
     {
         defaultSpeed = speed;
-        gridScript = GameObject.Find("A*").GetComponent<GridScript>();
-        pathDifferenceSqr = pathDifference * pathDifference;
+        gridScript = GameObject.Find("A*").GetComponent<GridManager>();
         groundMask = ~LayerMask.GetMask("Selectable");
     }
 
@@ -51,18 +46,18 @@ public class Unit : MonoBehaviour
     {
         PathfindingManager.GetPath(transform.position, target, this);
 
-        Vector3 targetPositionOld = target;
+        Vector3 previousTarget = target;
 
         while (true)
         {
-            yield return new WaitForSeconds(minPathUpdateTime); //Ensures it doesn't update path every frame
+            yield return new WaitForSeconds(100f); //Ensures it doesn't update path every frame
 
             //If the difference between the new and old target is big enough, the path is updated
-            if ((target - targetPositionOld).sqrMagnitude > pathDifferenceSqr)
+            if ((target - previousTarget).sqrMagnitude > 0.25f)
             {
                 pathTarget = target;
                 PathfindingManager.GetPath(transform.position, target, this);
-                targetPositionOld = target;
+                previousTarget = target;
             }
         }
     }

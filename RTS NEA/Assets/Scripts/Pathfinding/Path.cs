@@ -17,9 +17,9 @@ public class Path
         Vector2 previousPoint = new Vector2(startPosition.x, startPosition.z); //Ensures the previous point is the start point at the start of the path
         for (int i = 0; i < waypoints.Length; i++)
         {
+            Vector2 turnLocation;
             Vector2 currentLocation = new Vector2(waypoints[i].x, waypoints[i].z);
             Vector2 currentDirection = (currentLocation - previousPoint).normalized;
-            Vector2 turnLocation;
 
             //When the current location is the target, the unit doesn't need to turn
             if (i == turnBoundaries.Length - 1)

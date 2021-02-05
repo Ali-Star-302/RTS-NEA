@@ -5,7 +5,7 @@ using System;
 
 public class PathfindingManager : MonoBehaviour
 {
-    static PathfindingManager instance;
+    static PathfindingManager thisInstance;
 
     Queue<PathData> pathQueue = new Queue<PathData>();
     PathData currentPathData;
@@ -14,7 +14,7 @@ public class PathfindingManager : MonoBehaviour
 
     void Awake()
     {
-        instance = this;
+        thisInstance = this;
         pathfinding = GetComponent<Pathfinding>();
     }
 
@@ -22,8 +22,8 @@ public class PathfindingManager : MonoBehaviour
     public static void GetPath(Vector3 pathStart, Vector3 pathEnd, Unit unitInstance)
     {
         PathData path = new PathData(pathStart, pathEnd, unitInstance);
-        instance.pathQueue.Enqueue(path);
-        instance.ProcessNextPath();
+        thisInstance.pathQueue.Enqueue(path);
+        thisInstance.ProcessNextPath();
     }
 
     ///<summary> Sends the finished path back to the unit which requested a path and moves on to the next path </summary>

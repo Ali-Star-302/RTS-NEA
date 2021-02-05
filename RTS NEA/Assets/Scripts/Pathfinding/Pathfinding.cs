@@ -6,12 +6,12 @@ using System;
 public class Pathfinding : MonoBehaviour
 {
     PathfindingManager pathfindingManager;
-    GridScript grid;
+    GridManager grid;
 
     void Awake()
     {
         pathfindingManager = GetComponent<PathfindingManager>();
-        grid = GetComponent<GridScript>();
+        grid = GetComponent<GridManager>();
     }
 
     ///<summary> Finds a path using the A* algorithm </summary>
