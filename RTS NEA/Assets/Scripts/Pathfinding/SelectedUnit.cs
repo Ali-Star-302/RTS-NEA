@@ -20,6 +20,13 @@ public class SelectedUnit : MonoBehaviour
 
     void Update()
     {
+        MouseInput();
+    }
+
+
+    ///<summary> Checks for the player clicking somewhere and calls the subroutine to begin the process of moving to that point </summary>
+    void MouseInput()
+    {
         if (Input.GetMouseButtonDown(1))
         {
             RaycastHit hit;
@@ -37,10 +44,12 @@ public class SelectedUnit : MonoBehaviour
         }
     }
 
-    Vector3 CalculateOffset(bool closeTogether) //Needs improvement
+    ///<summary> Offsets unit away from the centre of the group </summary>
+    Vector3 CalculateOffset(bool closeTogether)
     {
         Vector3 baseOffset = transform.position - centreOfGroup;
 
+        //If close mode is on they are moved closer together
         if (closeTogether && baseOffset.sqrMagnitude > 45)
             return baseOffset.normalized * 3;
         else

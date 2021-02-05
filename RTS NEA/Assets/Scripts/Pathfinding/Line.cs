@@ -6,24 +6,22 @@ public class Line
 {
     const float verticalLineGradient = 100000f;
 
+    bool approachSide;
     float gradient;
     float yIntercept;
+    float perpendicularGradient;
     Vector2 linePoint1;
     Vector2 linePoint2;
 
-    float perpendicularGradient;
-
-    bool approachSide;
-
     public Line(Vector2 pointOnLine, Vector2 pointPerpendicularToLine)
     {
-        float dx = pointOnLine.x - pointPerpendicularToLine.x; //Difference in x of 
-        float dy = pointOnLine.y - pointPerpendicularToLine.y;
+        float deltaX = pointOnLine.x - pointPerpendicularToLine.x; //Difference in x of 
+        float deltaY = pointOnLine.y - pointPerpendicularToLine.y;
 
-        if (dx == 0)
+        if (deltaX == 0)
             perpendicularGradient = verticalLineGradient;
         else
-            perpendicularGradient = dy / dx;
+            perpendicularGradient = deltaY / deltaX;
 
         if (perpendicularGradient == 0)
             gradient = verticalLineGradient;

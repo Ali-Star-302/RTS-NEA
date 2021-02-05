@@ -205,12 +205,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 0}
-  speed: 15
-  turnSpeed: 3
-  turnDst: 5
-  stoppingDst: 8
-  groupingPenalty: 5
   groundCheck: {fileID: 5081305709114251145}
+  speed: 15
+  stoppingDistance: 5
+  turnSpeed: 3
+  turnRadius: 5
   selected: 0
 --- !u!114 &2721975636366155213
 MonoBehaviour:

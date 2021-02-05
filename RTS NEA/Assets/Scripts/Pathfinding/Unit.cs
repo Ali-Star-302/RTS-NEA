@@ -3,34 +3,29 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
-    const float minPathUpdateTime = 0.5f;
-    const float pathDifference = 0.5f;
-    float pathDifferenceSqr;
+    const float gravity = -9.81f;
 
     public Transform target;
-    public float speed = 15;
-    public float turnSpeed = 3f;
-    public float turnDst = 5;
-    public float stoppingDst = 10f;
-    public int groupingPenalty;
     public Transform groundCheck;
+    protected float speed = 15f;
+    protected float stoppingDistance = 5f;
+    protected float turnSpeed = 3f;
+    protected float turnRadius = 5f;
+    protected bool selected = false;
 
-    public bool selected = false;
     bool followingPath;
-
-    Path path;
     bool displayPathGizmos;
-    const float gravity = -9.81f;
     float defaultSpeed;
     int groundMask;
+    Path path;
+    GridManager gridScript;
 
-    GridScript gridScript;
+    Vector3 pathTarget;
 
     void Awake()
     {
         defaultSpeed = speed;
-        gridScript = GameObject.Find("A*").GetComponent<GridScript>();
-        pathDifferenceSqr = pathDifference * pathDifference;
+        gridScript = GameObject.Find("A*").GetComponent<GridManager>();
         groundMask = ~LayerMask.GetMask("Selectable");
     }
 
@@ -51,17 +46,18 @@ public class Unit : MonoBehaviour
     {
         PathfindingManager.GetPath(transform.position, target, this);
 
-        Vector3 targetPositionOld = target;
+        Vector3 previousTarget = target;
 
         while (true)
         {
-            yield return new WaitForSeconds(minPathUpdateTime); //Ensures it doesn't update path every frame
+            yield return new WaitForSeconds(100f); //Ensures it doesn't update path every frame
 
             //If the difference between the new and old target is big enough, the path is updated
-            if ((target - targetPositionOld).sqrMagnitude > pathDifferenceSqr)
+            if ((target - previousTarget).sqrMagnitude > 0.25f)
             {
+                pathTarget = target;
                 PathfindingManager.GetPath(transform.position, target, this);
-                targetPositionOld = target;
+                previousTarget = target;
             }
         }
     }
@@ -71,10 +67,8 @@ public class Unit : MonoBehaviour
     {
         if (pathSuccessful)
         {
-            path = new Path(waypoints, transform.position,turnDst, stoppingDst);
+            path = new Path(waypoints, transform.position,turnRadius, stoppingDistance);
 
-            //StopCoroutine("FollowPath");
-            //StartCoroutine("FollowPath");
             StopAllCoroutines();
             StartCoroutine(FollowPath());
         }
@@ -83,9 +77,9 @@ public class Unit : MonoBehaviour
     ///<summary> Follows the path that has been created </summary>
     IEnumerator FollowPath()
     {
-        followingPath = true;
         int pathIndex = 0;
-        transform.LookAt(new Vector3(path.lookPoints[0].x,transform.position.y, path.lookPoints[0].z));
+        followingPath = true;
+        transform.LookAt(new Vector3(path.waypoints[0].x,transform.position.y, path.waypoints[0].z));
 
         float speedPercent = 1;
 
@@ -93,7 +87,8 @@ public class Unit : MonoBehaviour
         {
             while (path.turnBoundaries[pathIndex].HasCrossedLine(new Vector2(transform.position.x, transform.position.z)))
             {
-                if (pathIndex == path.targetIndex)
+                //Stops following if the end of the path is reached
+                if (pathIndex == path.turnBoundaries.Length - 1)
                 {
                     followingPath = false;
                     break;
@@ -106,16 +101,17 @@ public class Unit : MonoBehaviour
             {
                 speed = defaultSpeed - (gridScript.GetNodeFromPosition(transform.position).movementPenalty)/2; //Reduces speed from the default speed depending on the current node's movement penalty
 
-                if (pathIndex >= path.decelerateIndex && stoppingDst > 0)
+                //When the unit passes the deceleration point it slows down
+                if (pathIndex >= path.decelerationPoint)
                 {
-                    speedPercent = Mathf.Clamp01(path.turnBoundaries[path.targetIndex].DistanceFromPoint(new Vector2(transform.position.x, transform.position.z)) / stoppingDst);
+                    speedPercent = Mathf.Clamp01(path.turnBoundaries[path.turnBoundaries.Length - 1].DistanceFromPoint(new Vector2(transform.position.x, transform.position.z)) / stoppingDistance);
                     if (speedPercent < 0.01f)
                     {
                         followingPath = false;
                     }
                 }
 
-                Quaternion targetRotation = Quaternion.LookRotation(new Vector3(path.lookPoints[pathIndex].x, transform.position.y, path.lookPoints[pathIndex].z) - transform.position);
+                Quaternion targetRotation = Quaternion.LookRotation(new Vector3(path.waypoints[pathIndex].x, transform.position.y, path.waypoints[pathIndex].z) - transform.position);
                 transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * turnSpeed);
                 transform.Translate(Vector3.forward * Time.deltaTime * speed * speedPercent, Space.Self);
             }
