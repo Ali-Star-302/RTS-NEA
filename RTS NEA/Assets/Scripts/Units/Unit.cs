@@ -1,5 +1,7 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Unit : MonoBehaviour
 {
@@ -7,26 +9,48 @@ public class Unit : MonoBehaviour
 
     public Transform target;
     public Transform groundCheck;
-    protected float speed = 15f;
-    protected float stoppingDistance = 5f;
-    protected float turnSpeed = 3f;
-    protected float turnRadius = 5f;
-    protected bool selected = false;
+    public virtual float speed { get; set; }
+    public virtual float stoppingDistance { get; set; }
+    public virtual float turnSpeed { get; set; }
+    public virtual float turnRadius { get; set; }
+    public virtual float meleeAttackSpeed { get; set; }
+    public virtual float meleeRange { get; set; }
+    public virtual int meleeDamage { get; set; }
+    public virtual float meleeAccuracy { get; set; }
+    public virtual int maxHealth { get; set; }
+
+    public int team;
+    public int health;
+    public HealthManager healthManager;
+    public bool selected;
 
     bool followingPath;
     bool displayPathGizmos;
     float defaultSpeed;
     int groundMask;
+    int selectableMask;
     Path path;
     GridManager gridScript;
+    bool unshowHealthIsRunning;
+    bool showHealth;
+    List<GameObject> enemiesInRange = new List<GameObject>();
 
     Vector3 pathTarget;
 
     void Awake()
     {
+        health = maxHealth;
         defaultSpeed = speed;
         gridScript = GameObject.Find("A*").GetComponent<GridManager>();
         groundMask = ~LayerMask.GetMask("Selectable");
+        selectableMask = LayerMask.GetMask("Selectable");
+
+        healthManager.SetMaxHealth(maxHealth);
+    }
+
+    void Start()
+    {
+        StartCoroutine(MeleeAttack());
     }
 
     void Update()
@@ -39,6 +63,11 @@ public class Unit : MonoBehaviour
         //If the unit is off the ground it applies gravity
         if (!Physics.CheckSphere(groundCheck.position,0.5f, groundMask))
             GetComponent<Rigidbody>().velocity += new Vector3(0, gravity * Time.deltaTime, 0);
+
+        if (health <= 0)
+            Death();
+        
+        healthManager.gameObject.SetActive(selected || showHealth);
     }
 
     ///<summary> Updates the path starting from its new position to the target </summary>
@@ -119,6 +148,52 @@ public class Unit : MonoBehaviour
         }
     }
 
+    public virtual IEnumerator MeleeAttack()
+    {
+        while (true)
+        {
+            foreach (Collider col in Physics.OverlapSphere(transform.position, meleeRange, selectableMask))
+            {
+                if (col.gameObject.tag == "Unit")
+                {
+                    if (col.gameObject.GetComponent<Unit>().team != team)
+                    {
+                        col.gameObject.GetComponent<Unit>().Damage(meleeDamage);
+                    }
+                }
+            }
+
+            yield return new WaitForSeconds(meleeAttackSpeed);
+        }
+    }
+
+    public void Damage(int damage)
+    {
+        health -= damage;
+        healthManager.UpdateHealthSlider(health);
+        healthManager.gameObject.SetActive(true);
+
+        if (!unshowHealthIsRunning)
+            StartCoroutine(UnshowHealth());
+    }
+
+    IEnumerator UnshowHealth()
+    {
+        unshowHealthIsRunning = true;
+
+        yield return new WaitForSeconds(3);
+        healthManager.gameObject.SetActive(true);
+        unshowHealthIsRunning = false;
+    }
+
+    void Death()
+    {
+        StopAllCoroutines();
+        Debug.Log(gameObject.name + " died");
+        GameObject.Find("Player").GetComponent<UnitSelection>().BroadcastMessage("Deselect", this.gameObject);
+        Destroy(this.gameObject);
+    }
+
     public void OnDrawGizmos()
     {
         if (!displayPathGizmos)
@@ -128,5 +203,11 @@ public class Unit : MonoBehaviour
         {
             path.DrawWithGizmos();
         }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, meleeRange);
     }
 }

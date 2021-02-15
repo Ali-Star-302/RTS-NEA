@@ -151,6 +151,8 @@ public class UnitSelection : MonoBehaviour
     {
         foreach (GameObject unit in selectedUnits)
         {
+            unit.GetComponent<Unit>().selected = false;
+
             if (unit.GetComponent<SelectedUnit>())
                 Destroy(unit.GetComponent<SelectedUnit>());
         }
@@ -160,6 +162,8 @@ public class UnitSelection : MonoBehaviour
     /// <summary> Deselects the given unit </summary>
     void Deselect(GameObject unit)
     {
+        unit.GetComponent<Unit>().selected = false;
+
         if (unit.GetComponent<SelectedUnit>())
             Destroy(unit.GetComponent<SelectedUnit>());
         selectedUnits.Remove(unit);
@@ -168,6 +172,7 @@ public class UnitSelection : MonoBehaviour
     /// <summary> Selects the given unit if it is not already selected </summary>
     void Select(GameObject unit)
     {
+        unit.GetComponent<Unit>().selected = true;
         SelectedUnit s;
         if (!unit.GetComponent<SelectedUnit>())
         {
