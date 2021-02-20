@@ -5,8 +5,9 @@ using UnityEngine;
 public class UnitSelection : MonoBehaviour
 {
     public List<GameObject> selectedUnits;
+    public List<GameObject> selectedEnemyUnits;
 
-    bool isSelecting = false;
+    bool isBoxSelecting = false;
     Vector3 position1;
     Vector3 position2;
     RaycastHit hit;
@@ -44,31 +45,25 @@ public class UnitSelection : MonoBehaviour
         {
             //Checks if the player is dragging and not just clicking
             if ((position1 - Input.mousePosition).magnitude > 40)
-            {
-                isSelecting = true;
-            }
+                isBoxSelecting = true;
         }
 
         if (Input.GetMouseButtonUp(0))
         {
             //Selecting a single unit
-            if (isSelecting == false)
+            if (isBoxSelecting == false)
             {
                 Ray ray = Camera.main.ScreenPointToRay(position1);
                 //Selectable layer mask
                 int selectableMask = 1 << 11;
 
                 if (Physics.Raycast(ray, out hit, 5000f, selectableMask))
-                {
                     IndividualSelect();
-                }
                 else
                 {
                     //Clears selected units when no unit is clicked and shift isn't pressed
                     if (!Input.GetKey(KeyCode.LeftShift))
-                    {
                         DeselectAll();
-                    }
                 }
                 UpdateCentreOfGroup();
             }
@@ -79,13 +74,11 @@ public class UnitSelection : MonoBehaviour
 
                 //Deselect all units when left shift isnt pressed
                 if (!Input.GetKey(KeyCode.LeftShift))
-                {
                     DeselectAll();
-                }
 
                 Destroy(selectionBox, 0.02f);
             }
-            isSelecting = false;
+            isBoxSelecting = false;
         }
 
         if (selectedUnits.Count > 0)
@@ -98,7 +91,7 @@ public class UnitSelection : MonoBehaviour
         //Selecting multiple units individually with left shift
         if (Input.GetKey(KeyCode.LeftShift))
         {
-            if (selectedUnits.Contains(hit.transform.gameObject))
+            if (selectedUnits.Contains(hit.transform.gameObject) || selectedEnemyUnits.Contains(hit.transform.gameObject))
                 Deselect(hit.transform.gameObject);
             else
                 Select(hit.transform.gameObject);
@@ -107,9 +100,7 @@ public class UnitSelection : MonoBehaviour
         {
             //Clears selected units and selects a new one
             if (selectedUnits.Contains(hit.transform.gameObject))
-            {
                 DeselectAll();
-            }
             else
             {
                 DeselectAll();
@@ -157,6 +148,12 @@ public class UnitSelection : MonoBehaviour
                 Destroy(unit.GetComponent<SelectedUnit>());
         }
         selectedUnits.Clear();
+
+        foreach (GameObject unit in selectedEnemyUnits)
+        {
+            unit.GetComponent<Unit>().selected = false;
+        }
+        selectedEnemyUnits.Clear();
     }
 
     /// <summary> Deselects the given unit </summary>
@@ -166,17 +163,26 @@ public class UnitSelection : MonoBehaviour
 
         if (unit.GetComponent<SelectedUnit>())
             Destroy(unit.GetComponent<SelectedUnit>());
-        selectedUnits.Remove(unit);
+        if (unit.GetComponent<Unit>().team == 0)
+            selectedUnits.Remove(unit);
+        else
+            selectedEnemyUnits.Remove(unit);
     }
 
     /// <summary> Selects the given unit if it is not already selected </summary>
     void Select(GameObject unit)
     {
         unit.GetComponent<Unit>().selected = true;
-        SelectedUnit s;
+
+        if (unit.GetComponent<Unit>().team != 0)
+        {
+            selectedEnemyUnits.Add(unit);
+            return;
+        }
+        
         if (!unit.GetComponent<SelectedUnit>())
         {
-            s = unit.AddComponent<SelectedUnit>();
+            unit.AddComponent<SelectedUnit>();
         }
         if (!selectedUnits.Contains(unit))
             selectedUnits.Add(unit);
@@ -285,7 +291,7 @@ public class UnitSelection : MonoBehaviour
     void OnGUI()
     {
         //Draws box when dragging
-        if (isSelecting)
+        if (isBoxSelecting)
         {
             var rect = Utilities.GetScreenRectangle(position1, Input.mousePosition);
             Utilities.DrawRectangle(rect, new Color(0.65f, 0.65f, 0.95f, 0.15f));
@@ -297,8 +303,12 @@ public class UnitSelection : MonoBehaviour
     {
         if (col.gameObject.tag == "Unit")
         {
+            if (col.gameObject.GetComponent<Unit>().team != 0)
+                return;
+
             Select(col.gameObject);
+            UpdateCentreOfGroup();
         }
-        UpdateCentreOfGroup();
+        
     }
 }

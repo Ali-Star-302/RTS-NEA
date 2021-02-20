@@ -142,14 +142,14 @@ public class CameraController : MonoBehaviour
         newPosition += Input.GetAxis("Horizontal") * transform.right * movementSpeed;
 
         //Rotation
-        if (Input.GetKey(KeyCode.Q))
+        /*if (Input.GetKey(KeyCode.Q))
         {
             newRotation *= Quaternion.Euler(Vector3.up * -rotationAmount);
         }
         if (Input.GetKey(KeyCode.E))
         {
             newRotation *= Quaternion.Euler(Vector3.up * rotationAmount);
-        }
+        }*/
 
         //Zoom
         if (Input.GetKey(KeyCode.R))
