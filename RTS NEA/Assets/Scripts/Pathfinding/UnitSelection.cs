@@ -163,7 +163,7 @@ public class UnitSelection : MonoBehaviour
 
         if (unit.GetComponent<SelectedUnit>())
             Destroy(unit.GetComponent<SelectedUnit>());
-        if (unit.GetComponent<Unit>().team == 0)
+        if (unit.GetComponent<Unit>().team == 1)
             selectedUnits.Remove(unit);
         else
             selectedEnemyUnits.Remove(unit);
@@ -174,7 +174,7 @@ public class UnitSelection : MonoBehaviour
     {
         unit.GetComponent<Unit>().selected = true;
 
-        if (unit.GetComponent<Unit>().team != 0)
+        if (unit.GetComponent<Unit>().team != 1)
         {
             selectedEnemyUnits.Add(unit);
             return;
@@ -303,7 +303,7 @@ public class UnitSelection : MonoBehaviour
     {
         if (col.gameObject.tag == "Unit")
         {
-            if (col.gameObject.GetComponent<Unit>().team != 0)
+            if (col.gameObject.GetComponent<Unit>().team != 1)
                 return;
 
             Select(col.gameObject);
