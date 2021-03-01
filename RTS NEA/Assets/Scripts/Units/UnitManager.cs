@@ -20,25 +20,63 @@ public class UnitManager : MonoBehaviour
     public GameObject archerPrefab;
     public GameObject cavalryPrefab;
 
+    public float maxMoney;
+    public float teamOneMoney;
+    public float teamTwoMoney;
+    public float pikemanCost;
+    public float archerCost;
+    public float cavalryCost;
+
 
     private void Awake()
     {
         DontDestroyOnLoad(gameObject);
         SceneManager.sceneLoaded += OnSceneLoaded;
+        teamOneMoney = maxMoney;
+        teamTwoMoney = maxMoney;
     }
 
     public void ChangeUnit(int value, int team, string unitType)
     {
+        float unitCost = GetUnitCost(unitType);
+
         if (team == 1)
         {
-            if (teamOneUnits[unitType] + value >= 0)
+            if (teamOneMoney - unitCost < 0 && value > 0) //Stops the function if the transaction would go into negatives
+                return;
+            else if (teamOneUnits[unitType] + value >= 0)
+            {
                 teamOneUnits[unitType] += value;
+                if (value > 0)
+                {
+                    teamOneMoney -= unitCost;
+                }
+                else
+                    teamOneMoney += unitCost;
+            }
         }
         else
         {
-            if (teamTwoUnits[unitType] + value >= 0)
+            if (teamTwoMoney - unitCost < 0 && value > 0) //Stops the function if the transaction would go into negatives
+                return;
+            else if (teamTwoUnits[unitType] + value >= 0)
+            {
                 teamTwoUnits[unitType] += value;
+                if (value > 0)
+                {
+                    teamTwoMoney -= unitCost;
+                }
+                else
+                    teamTwoMoney += unitCost;
+            }
         }
+    }
+
+    void InstantiateUnit(GameObject unitPrefab, int team)
+    {
+        GameObject temp;
+        temp = Instantiate(unitPrefab, new Vector3(0, 100, 0), Quaternion.identity);
+        temp.GetComponent<Unit>().team = team;
     }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -75,10 +113,26 @@ public class UnitManager : MonoBehaviour
         }
     }
 
-    void InstantiateUnit(GameObject unitPrefab, int team)
+    float GetUnitCost(string unitName)
     {
-        GameObject temp;
-        temp = Instantiate(unitPrefab, new Vector3(0,100,0), Quaternion.identity);
-        temp.GetComponent<Unit>().team = team;
+        float value;
+
+        switch (unitName)
+        {
+            case "Pikeman":
+                value = pikemanCost;
+                break;
+            case "Archer":
+                value = archerCost;
+                break;
+            case "Cavalry":
+                value = cavalryCost;
+                break;
+            default:
+                value = 0;
+                break;
+        }
+
+        return value;
     }
 }
