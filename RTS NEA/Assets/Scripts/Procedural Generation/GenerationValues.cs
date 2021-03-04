@@ -21,7 +21,6 @@ public static class GenerationValues //Static class for holding constant values 
     public static void SetSeed(int _seed)
     {
         seed = _seed;
-        Debug.Log("seed " + seed);
     }
 
     public static int GetMapSize()
@@ -32,7 +31,6 @@ public static class GenerationValues //Static class for holding constant values 
     public static void SetMapSize(int _mapSize)
     {
         mapSize = _mapSize;
-        Debug.Log("mapSize" + mapSize);
     }
 
     public static float GetMapScale()
@@ -43,7 +41,6 @@ public static class GenerationValues //Static class for holding constant values 
     public static void SetMapScale(float _mapScale)
     {
         mapScale = _mapScale;
-        Debug.Log("mapScale " + mapScale);
     }
 
     public static float GetHeightScale()
@@ -54,6 +51,5 @@ public static class GenerationValues //Static class for holding constant values 
     public static void SetHeightScale(float _heightScale)
     {
         heightScale = _heightScale;
-        Debug.Log("heightScale " + heightScale);
     }
 }

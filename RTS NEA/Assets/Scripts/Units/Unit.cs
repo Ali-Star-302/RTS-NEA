@@ -26,8 +26,8 @@ public class Unit : MonoBehaviour
     public bool attacking;
     public HealthManager healthManager;
     public Transform selectionCircle;
+    public bool followingPath;
 
-    protected bool followingPath;
     protected bool displayPathGizmos;
     protected bool unshowHealthIsRunning;
     protected bool showHealth;
@@ -236,5 +236,16 @@ public class Unit : MonoBehaviour
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, meleeRange);
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if (!collision.gameObject.GetComponent<Unit>())
+            return;
+
+        if (collision.gameObject.GetComponent<Unit>().team == team)
+        {
+            Physics.IgnoreCollision(collision.gameObject.GetComponent<Collider>(), gameObject.GetComponent<Collider>(), true);
+        }
     }
 }

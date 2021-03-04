@@ -119,8 +119,10 @@ MonoBehaviour:
   team: 0
   health: 0
   selected: 0
+  attacking: 0
   healthManager: {fileID: 2396346900389809518}
   selectionCircle: {fileID: 6997692455131551240}
+  followingPath: 0
 --- !u!114 &2039319792018877512
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -190,7 +192,6 @@ GameObject:
   - component: {fileID: 2039319792829001162}
   - component: {fileID: 2039319792829001165}
   - component: {fileID: 2039319792829001164}
-  - component: {fileID: 2039319792829001163}
   m_Layer: 11
   m_Name: Cube
   m_TagString: Untagged
@@ -259,19 +260,6 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
---- !u!65 &2039319792829001163
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2039319792829001161}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &5543263391951640007
 PrefabInstance:
   m_ObjectHideFlags: 0

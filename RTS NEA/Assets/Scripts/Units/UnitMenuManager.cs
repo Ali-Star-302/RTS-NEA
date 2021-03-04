@@ -19,6 +19,7 @@ public class UnitMenuManager : MonoBehaviour
     public TMP_Text cavalry2Text;
     public TMP_Text teamOneMoney;
     public TMP_Text teamTwoMoney;
+    public TMP_Text mapSizeText;
 
     public Slider mapSizeSlider;
     public TMP_InputField seedInput;
@@ -28,12 +29,15 @@ public class UnitMenuManager : MonoBehaviour
     int temp;
     UnitManager unitManager;
 
-    void Awake()
+    void Start()
     {
         unitManager = GameObject.Find("UnitManager").GetComponent<UnitManager>();
 
         if (GenerationValues.GetSeed() == 0)
             GenerationUtilities.GenerateRandomSeed();
+
+        mapSizeText.text = "Map Size: " + GenerationValues.GetMapSize().ToString();
+        mapSizeSlider.value = GenerationValues.GetMapSize();
     }
 
     void Update()
@@ -82,6 +86,7 @@ public class UnitMenuManager : MonoBehaviour
     public void ChangeMapSize(float size)
     {
         GenerationValues.SetMapSize((int)size);
+        mapSizeText.text = "Map Size: " + size.ToString();
     }
 
     public void ApplySeed()
@@ -96,6 +101,7 @@ public class UnitMenuManager : MonoBehaviour
     public void RandomSeed()
     {
         GenerationUtilities.GenerateRandomSeed();
+        seedInput.text = GenerationValues.GetSeed().ToString();
     }
 
     public void UpdateMapPreview()

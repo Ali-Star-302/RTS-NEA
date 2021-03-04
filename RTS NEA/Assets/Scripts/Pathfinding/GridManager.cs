@@ -17,22 +17,12 @@ public class GridManager : MonoBehaviour
     public Node[,] grid;
     Dictionary<int, int> walkableRegionsDictionary = new Dictionary<int, int>();
 
-    float nodeDiameter;
+    public float nodeDiameter;
     int gridSizeX, gridSizeZ;
     int raycastMask;
 
     int minPenalty = int.MaxValue;
     int maxPenalty = int.MinValue;
-
-    void Awake()
-    {
-        
-    }
-
-    void Start()
-    {
-        
-    }
 
     void Update()
     {

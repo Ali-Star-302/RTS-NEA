@@ -63,17 +63,33 @@ public class Arrow : MonoBehaviour
 
     void OnCollisionEnter(Collision col)
     {
+        //Ensures it doesn't collider with other projectiles
         if (col.gameObject.layer == gameObject.layer)
             return;
+
+        //Ignores the collision if it is a friendly unit
+        if (col.gameObject.GetComponent<Unit>())
+        {
+            if (col.gameObject.GetComponent<Unit>().team == team)
+            {
+                Physics.IgnoreCollision(col.gameObject.GetComponent<Collider>(), gameObject.GetComponent<Collider>(), true);
+                return;
+            }
+        }
+        
+
+        //Destroys the rigidbody and collider once collided with something
         Destroy(rb);
         Destroy(GetComponent<Collider>());
+
+        //If the collider is on selectable layer set the parent to be the collider object
         if (col.gameObject.layer == 11)
         {
             transform.SetParent(col.transform);
-            Destroy(gameObject, 1.5f);
+            Destroy(gameObject, 1.5f);  //Destroys the arrow after 1.5 seconds of being stuck to something selectable
         }
         else
-            Destroy(gameObject, 1f);
+            Destroy(gameObject, 1f);    //Destroys the arrow after 1 second of colliding with something
     }
 
     private void OnDrawGizmos()

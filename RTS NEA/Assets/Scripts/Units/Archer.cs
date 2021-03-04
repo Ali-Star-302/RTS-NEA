@@ -66,7 +66,7 @@ public class Archer : Unit
 
     void RangedAttack()
     {
-        transform.LookAt(arrowTarget);
+        transform.LookAt(new Vector3(arrowTarget.x, transform.position.y, arrowTarget.z));
         attacking = false;
 
         rangedAttackCounter += Time.deltaTime;

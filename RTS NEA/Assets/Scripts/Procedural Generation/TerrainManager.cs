@@ -6,7 +6,7 @@ public class TerrainManager : MonoBehaviour
 {
     public GameObject terrainPrefab;
     public GridManager gridManager;
-    public int mapSize = 1;
+    public int mapSize = 2;
     int chunkSize;
 
     GameObject[] terrainObjects;
@@ -14,8 +14,9 @@ public class TerrainManager : MonoBehaviour
 
     void Awake()
     {
+        if (GenerationValues.GetMapSize() != 0)
+            mapSize = GenerationValues.GetMapSize();
 
-        mapSize = GenerationValues.GetMapSize();
 
         if (GenerationValues.GetSeed() == 0)
             GenerationUtilities.GenerateRandomSeed();

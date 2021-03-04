@@ -6,8 +6,8 @@ public class Cavalry : Unit
 {
     public override float speed { get => 15f; }
     public override float stoppingDistance { get => 7f; }
-    public override float turnSpeed { get => 1f; }
-    public override float turnRadius { get => 8f; }
+    public override float turnSpeed { get => 4f; }
+    public override float turnRadius { get => 3f; }
     public override float meleeAttackSpeed { get => 1.2f; } //Higher is slower
     public override float meleeRange { get => 6f; }
     public override int meleeDamage { get => 6; }

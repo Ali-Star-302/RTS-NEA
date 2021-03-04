@@ -6,8 +6,8 @@ public class Pikeman : Unit
 {
     public override float speed { get => 9f; }
     public override float stoppingDistance { get => 5f; }
-    public override float turnSpeed { get => 3f; }
-    public override float turnRadius { get => 5f; }
+    public override float turnSpeed { get => 4f; }
+    public override float turnRadius { get => 3f; }
     public override float meleeAttackSpeed { get => 0.8f; } //Higher is slower
     public override float meleeRange { get => 7f; }
     public override int meleeDamage { get => 5; }

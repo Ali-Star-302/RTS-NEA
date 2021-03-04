@@ -4,13 +4,20 @@ using UnityEngine;
 
 public class SelectedUnit : MonoBehaviour
 {
-    Vector3 targetPosition;
     public Vector3 centreOfGroup;
+    public int numberOfUnits;
+    public int unitIndex;
+
+    Vector3 targetPosition;
     Vector3 gizmoPos;
     Unit unitScript;
+    GridManager gridManager;
+    bool inFormation = false;
+
 
     void Start()
     {
+        gridManager = GameObject.Find("A*").GetComponent<GridManager>();
         unitScript = GetComponent<Unit>();
     }
 
@@ -35,22 +42,78 @@ public class SelectedUnit : MonoBehaviour
                 //Offsets the archer from the unit by its specified range so it can do a ranged attack
                 if (unitScript.GetType().ToString() == "Archer")
                 {
-                    unitScript.gameObject.GetComponent<Archer>().arrowTarget = targetPosition;
+                    /*unitScript.gameObject.GetComponent<Archer>().arrowTarget = targetPosition;
                     gizmoPos = targetPosition;
                     Vector3 unitVector = (targetPosition - transform.position).normalized;
                     float unitRange = unitScript.gameObject.GetComponent<Archer>().rangedRange;
                     targetPosition = targetPosition - (unitRange * unitVector);
                     unitScript.gameObject.GetComponent<Archer>().rangedAttacking = true;
 
-                    targetPosition = targetPosition + CalculateOffset(true);
                     if (Vector3.Distance(unitScript.transform.position, targetPosition) > 10)
-                        StartCoroutine(unitScript.UpdatePath(targetPosition + CalculateOffset(true)));
+                        StartCoroutine(unitScript.UpdatePath(targetPosition + CalculateOffset(true)));*/
+
+
+                    /*if (Input.GetKey(KeyCode.C))
+                    {
+                        unitScript.gameObject.GetComponent<Archer>().arrowTarget = targetPosition;
+                        gizmoPos = targetPosition;
+
+                        Vector3 unitVector = (targetPosition - centreOfGroup).normalized;
+                        float unitRange = unitScript.gameObject.GetComponent<Archer>().rangedRange;
+                        targetPosition = centreOfGroup - (unitRange * unitVector);
+                        unitScript.gameObject.GetComponent<Archer>().rangedAttacking = true;
+
+                        if (Vector3.Distance(unitScript.transform.position, targetPosition) > 10)
+                            StartCoroutine(unitScript.UpdatePath(GetFormationPosition(targetPosition, numberOfUnits, unitIndex)));
+                    }
+                    else
+                    {
+                        unitScript.gameObject.GetComponent<Archer>().arrowTarget = targetPosition;
+                        gizmoPos = targetPosition;
+                        Vector3 unitVector = (targetPosition - transform.position).normalized;
+                        float unitRange = unitScript.gameObject.GetComponent<Archer>().rangedRange;
+                        targetPosition = targetPosition - (unitRange * unitVector);
+                        unitScript.gameObject.GetComponent<Archer>().rangedAttacking = true;
+
+                        if (Vector3.Distance(unitScript.transform.position, targetPosition) > 10)
+                            StartCoroutine(unitScript.UpdatePath(targetPosition + CalculateOffset(true)));
+                    }*/
+
+                    unitScript.gameObject.GetComponent<Archer>().arrowTarget = targetPosition;
+                    gizmoPos = targetPosition;
+                    float unitRange = unitScript.gameObject.GetComponent<Archer>().rangedRange;
+                    Vector3 unitVector;
+
+                    if (Input.GetKey(KeyCode.C))
+                    {
+                        unitVector = (targetPosition - centreOfGroup).normalized;
+                        targetPosition = targetPosition - (unitRange * unitVector);
+
+                        if (Vector3.Distance(centreOfGroup, targetPosition) > 10 || !inFormation)
+                        {
+                            StartCoroutine(unitScript.UpdatePath(GetFormationPosition(targetPosition, numberOfUnits, unitIndex)));
+                            inFormation = true;
+                        }
+                    }
+                    else
+                    {
+                        unitVector = (targetPosition - transform.position).normalized;
+                        targetPosition = targetPosition - (unitRange * unitVector);
+
+                        if (Vector3.Distance(transform.position, targetPosition) > 10 || inFormation)
+                        {
+                            StartCoroutine(unitScript.UpdatePath(targetPosition + CalculateOffset(false)));
+                            inFormation = false;
+                        }
+                    }
+
+                    gameObject.GetComponent<Archer>().rangedAttacking = true;
                 }
                 else
                 {
                     unitScript.attacking = true;
                     if (Input.GetKey(KeyCode.C))
-                        StartCoroutine(unitScript.UpdatePath(targetPosition + CalculateOffset(true))); //Calls the UpdatePath method from the Unit script, passing in the target position with an offset
+                        StartCoroutine(unitScript.UpdatePath(GetFormationPosition(targetPosition, numberOfUnits, unitIndex))); //Calls the UpdatePath method from the Unit script, passing in the target position with an offset
                     else
                         StartCoroutine(unitScript.UpdatePath(targetPosition + CalculateOffset(false)));
                 }
@@ -71,7 +134,7 @@ public class SelectedUnit : MonoBehaviour
                 unitScript.attacking = false;
 
                 if (Input.GetKey(KeyCode.C))
-                    StartCoroutine(unitScript.UpdatePath(targetPosition + CalculateOffset(true))); //Calls the UpdatePath method from the Unit script, passing in the target position with an offset
+                    StartCoroutine(unitScript.UpdatePath(GetFormationPosition(targetPosition, numberOfUnits, unitIndex))); //Calls the UpdatePath method from the Unit script, passing in the target position with an offset
                 else
                     StartCoroutine(unitScript.UpdatePath(targetPosition + CalculateOffset(false)));
             }
@@ -79,15 +142,37 @@ public class SelectedUnit : MonoBehaviour
     }
 
     ///<summary> Offsets unit away from the centre of the group </summary>
-    Vector3 CalculateOffset(bool closeTogether)
+    Vector3 CalculateOffset(bool groupTogether)
     {
         Vector3 baseOffset = transform.position - centreOfGroup;
 
-        //If close mode is on they are moved closer together
-        if (closeTogether && baseOffset.sqrMagnitude > 45)
+        //If groupTogether mode is on they are moved closer together
+        if (groupTogether && baseOffset.sqrMagnitude > 45)
             return baseOffset.normalized * 3;
         else
             return baseOffset;
+    }
+
+    public static Vector3 GetFormationPosition(Vector3 target, int unitCount, int unitIndex)
+    {
+        Vector3 newTarget = target;
+        float unitSpacing = 2;
+        int unitLine = 0;
+        if (unitCount <= 10)
+        {
+            newTarget = newTarget + (Vector3.left * (((unitCount % 10) / 2 - unitIndex) * unitSpacing));
+        }
+        else
+        {
+            unitLine = (int)(unitIndex / 10);
+            if (unitIndex % 10 <= unitIndex % 10 / 2)
+                newTarget = newTarget + (Vector3.left * unitSpacing * (unitIndex % 10)) + (Vector3.back * unitLine * unitSpacing);
+            else
+                newTarget = newTarget + (Vector3.right * unitSpacing * (unitIndex % 10)) + (Vector3.back * unitLine * unitSpacing);
+        }
+        //Debug.Log(unitIndex + ": " + newTarget + ", " + unitLine);
+
+        return newTarget;
     }
 
     void OnDrawGizmos()

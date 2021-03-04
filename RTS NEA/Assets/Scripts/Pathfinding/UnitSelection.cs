@@ -208,9 +208,19 @@ public class UnitSelection : MonoBehaviour
     void UpdateCentreOfGroup()
     {
         Vector3 centre = CalculateCentreOfGroup();
-        foreach (GameObject g in selectedUnits)
+        int _numberOfUnits = selectedUnits.Count;
+        /*foreach (GameObject g in selectedUnits)
         {
             g.GetComponent<SelectedUnit>().centreOfGroup = centre;
+            g.GetComponent<SelectedUnit>().numberOfUnits = _numberOfUnits;
+        }*/
+
+        for (int i = 0; i < _numberOfUnits; i++)
+        {
+            selectedUnits[i].GetComponent<SelectedUnit>().centreOfGroup = centre;
+
+            selectedUnits[i].GetComponent<SelectedUnit>().numberOfUnits = _numberOfUnits;
+            selectedUnits[i].GetComponent<SelectedUnit>().unitIndex = i;
         }
     }
 

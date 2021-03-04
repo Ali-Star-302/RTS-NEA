@@ -20,7 +20,7 @@ public class TerrainEditor : MonoBehaviour
 
     public Texture2D UpdateMapPreview()
     {
-        float[,] noiseMap = NoiseMap.GenerateNoiseMap(GenerationValues.GetMapSize() * GenerationValues.GetChunkSize(), GenerationValues.GetMapScale(), 0,0, "Bob");
+        float[,] noiseMap = NoiseMap.GenerateNoiseMap(GenerationValues.GetMapSize() * GenerationValues.GetChunkSize()+1, GenerationValues.GetMapScale(), 0,0, "Bob");
         return GenerationUtilities.CreateColourTexture(noiseMap);
     }
 }
