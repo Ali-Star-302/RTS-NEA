@@ -48,7 +48,7 @@ public class MainMenuManager : MonoBehaviour
 
     public void Play()
     {
-        SceneManager.LoadScene(1);
+        SceneManager.LoadScene("Unit Selection");
     }
 
     public void Quit()

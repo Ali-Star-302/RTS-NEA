@@ -4,37 +4,35 @@ using UnityEngine;
 
 public class NoiseMap : MonoBehaviour
 {
+
     ///<summary> Returns an array of floats with a given size, each float representing a value of perlin noise </summary>
-    public float[,] GenerateNoiseMap(int mapSize, float scale, float _offsetX, float _offsetZ)
+    public static float[,] GenerateNoiseMap(int chunkSize, float scale, float _offsetX, float _offsetZ, string name)
     {
-        //int seed = GenerationValues.GetSeed();
-        //System.Random random = new System.Random(1);
-        //random.Next(-10000, 10000);
-        
-        float[,] noiseMap = new float[mapSize, mapSize];
+        System.Random random = new System.Random(GenerationValues.GetSeed());
+        int randomOffset = random.Next(1000, 100000); //Stops weird tiling when the offset is near 0
 
-        for (int z = 0; z < mapSize; z++) //Loops through length and width assigning perlin noise value
+        float[,] noiseMap = new float[chunkSize, chunkSize];
+        /*GameObject parentObj = new GameObject();
+        parentObj.name = "Cubes " + name;*/
+
+        for (int z = 0; z < chunkSize; z++) //Loops through length and width assigning perlin noise value
         {
-            for (int x = 0; x < mapSize; x++)
+            for (int x = 0; x < chunkSize; x++)
             {
-                float currentX = (x + _offsetX) / scale;
-                float currentZ = (z + _offsetZ) / scale;
+                float currentX = (_offsetX + x) / scale;
+                float currentZ = (_offsetZ - z) / scale;
 
-                noiseMap[x, z] = Mathf.PerlinNoise(currentX, currentZ);
-
-                /*if (x == 0 && z == 0 && _offsetX == 0 && _offsetZ == 0)
+                /*if (x % 5 == 0 && z % 5 == 0)
                 {
-                    Debug.Log("Middle tl: " + currentX + ", " + currentZ);
-                    Debug.Log("Perlin:" + Mathf.PerlinNoise(currentX, currentZ));
-                }
-                else if (x == 0 && z == 0 && _offsetX == 128 && _offsetZ == 0)
-                {
-                    Debug.Log("Right tl: " + currentX + ", " + currentZ);
-                    Debug.Log("Perlin:" + Mathf.PerlinNoise(currentX, currentZ));
+                    GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    cube.transform.position = new Vector3(_offsetX + x, Mathf.PerlinNoise(currentX + 200, currentZ + 200) * 20, _offsetZ - z);
+                    cube.name = "Cube " + name + ": " + x + ", " + z;
+                    cube.transform.parent = parentObj.transform;
                 }*/
+
+                noiseMap[x, z] = Mathf.PerlinNoise(currentX + randomOffset, currentZ + randomOffset);
             }
         }
-        
         return noiseMap;
     }
 }

@@ -216,7 +216,7 @@ public class Unit : MonoBehaviour
     protected void Death()
     {
         StopAllCoroutines();
-        Debug.Log(gameObject.name + " died");
+        //Debug.Log(gameObject.name + " died");
         GameObject.Find("Player").GetComponent<UnitSelection>().BroadcastMessage("Deselect", this.gameObject);
         Destroy(this.gameObject);
     }

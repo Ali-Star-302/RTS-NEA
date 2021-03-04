@@ -27,7 +27,6 @@ public class UnitManager : MonoBehaviour
     public float archerCost;
     public float cavalryCost;
 
-
     private void Awake()
     {
         DontDestroyOnLoad(gameObject);

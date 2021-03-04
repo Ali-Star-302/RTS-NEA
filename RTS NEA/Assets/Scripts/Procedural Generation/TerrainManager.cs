@@ -5,6 +5,7 @@ using UnityEngine;
 public class TerrainManager : MonoBehaviour
 {
     public GameObject terrainPrefab;
+    public GridManager gridManager;
     public int mapSize = 1;
     int chunkSize;
 
@@ -13,6 +14,12 @@ public class TerrainManager : MonoBehaviour
 
     void Awake()
     {
+
+        mapSize = GenerationValues.GetMapSize();
+
+        if (GenerationValues.GetSeed() == 0)
+            GenerationUtilities.GenerateRandomSeed();
+
         chunkSize = GenerationValues.GetChunkSize();
         Vector3 placementPos;
         Vector3 newPlacementPos;
@@ -34,7 +41,7 @@ public class TerrainManager : MonoBehaviour
                 for (int x = 1; x <= mapSize;x++)
                 {
                     
-                    if (x == 1 && z == 1)
+                    if (x == 1 && z == 1) //When its top left use the placement position as its position
                     {
                         terrainObjects[0] = Instantiate(terrainPrefab, new Vector3(placementPos.x, 0, placementPos.z), Quaternion.identity);
                     }
@@ -43,11 +50,14 @@ public class TerrainManager : MonoBehaviour
                         terrainObjects[meshCounter] = Instantiate(terrainPrefab, new Vector3(newPlacementPos.x, 0, newPlacementPos.z), Quaternion.identity);
                     }
                     terrainObjects[meshCounter].name = "Terrain Mesh " + meshCounter;
-                    newPlacementPos = new Vector3(placementPos.x + (x * 128), 0, newPlacementPos.z);
+                    newPlacementPos = new Vector3(placementPos.x + (x * 128), 0, newPlacementPos.z); //When iterating horizontally this is the maths which finds the positiona
+                    terrainObjects[meshCounter].GetComponent<MapGeneration>().StartGeneration();
                     meshCounter++;
                 }
-                newPlacementPos = new Vector3(placementPos.x, 0, placementPos.z - (z * 128));
+                newPlacementPos = new Vector3(placementPos.x, 0, placementPos.z - (z * 128)); //When a vertical iteration is done this finds the new location
             }
         }
+
+        gridManager.StartGridCreation();
     }
 }

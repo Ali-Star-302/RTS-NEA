@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class GenerationValues
+public static class GenerationValues //Static class for holding constant values used by range of different generations scripts
 {
-    public static int seed;
+    static int seed;
+    static int mapSize;
+    static float mapScale, heightScale;
 
     public static int GetChunkSize()
     {
@@ -14,5 +16,44 @@ public static class GenerationValues
     public static int GetSeed()
     {
         return seed;
+    }
+
+    public static void SetSeed(int _seed)
+    {
+        seed = _seed;
+        Debug.Log("seed " + seed);
+    }
+
+    public static int GetMapSize()
+    {
+        return mapSize;
+    }
+
+    public static void SetMapSize(int _mapSize)
+    {
+        mapSize = _mapSize;
+        Debug.Log("mapSize" + mapSize);
+    }
+
+    public static float GetMapScale()
+    {
+        return mapScale;
+    }
+
+    public static void SetMapScale(float _mapScale)
+    {
+        mapScale = _mapScale;
+        Debug.Log("mapScale " + mapScale);
+    }
+
+    public static float GetHeightScale()
+    {
+        return heightScale;
+    }
+
+    public static void SetHeightScale(float _heightScale)
+    {
+        heightScale = _heightScale;
+        Debug.Log("heightScale " + heightScale);
     }
 }

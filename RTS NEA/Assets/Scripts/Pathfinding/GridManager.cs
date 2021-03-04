@@ -26,6 +26,24 @@ public class GridManager : MonoBehaviour
 
     void Awake()
     {
+        
+    }
+
+    void Start()
+    {
+        
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown("z") && displayGridGizmos == true)
+            displayGridGizmos = false;
+        else if (Input.GetKeyDown("z") && displayGridGizmos == false)
+            displayGridGizmos = true;
+    }
+
+    public void StartGridCreation()
+    {
         TerrainManager terrainManager = GameObject.Find("Terrain Manager").GetComponent<TerrainManager>();
         gridWorldSize = new Vector3(terrainManager.mapSize * GenerationValues.GetChunkSize(), 100, terrainManager.mapSize * GenerationValues.GetChunkSize());
         raycastMask = grassMask | roadMask | unwalkableMask;
@@ -38,19 +56,8 @@ public class GridManager : MonoBehaviour
             walkableMask.value |= region.terrainMask.value;
             walkableRegionsDictionary.Add((int)Mathf.Log(region.terrainMask.value, 2), region.terrainPenalty);
         }
-    }
 
-    void Start()
-    {
         CreateGrid();
-    }
-
-    void Update()
-    {
-        if (Input.GetKeyDown("z") && displayGridGizmos == true)
-            displayGridGizmos = false;
-        else if (Input.GetKeyDown("z") && displayGridGizmos == false)
-            displayGridGizmos = true;
     }
 
     public int GetMaxSize
