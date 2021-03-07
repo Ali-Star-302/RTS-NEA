@@ -52,13 +52,11 @@ MonoBehaviour:
   movementTime: 10
   rotationAmount: 0.7
   zoomAmount: {x: 0, y: -2, z: 0}
-  maxZoom: 80
+  maxZoom: 120
   minZoom: -40
   newPosition: {x: 0, y: 0, z: 0}
   newRotation: {x: 0, y: 0, z: 0, w: 0}
   newZoom: {x: 0, y: 0, z: 0}
-  dragStartPosition: {x: 0, y: 0, z: 0}
-  dragCurrentPosition: {x: 0, y: 0, z: 0}
   rotateStartPosition: {x: 0, y: 0, z: 0}
   rotateCurrentPosition: {x: 0, y: 0, z: 0}
 --- !u!1 &4269998244839901952

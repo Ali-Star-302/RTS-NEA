@@ -46,7 +46,7 @@ public class Unit : MonoBehaviour
     {
         health = maxHealth;
         defaultSpeed = speed;
-        gridScript = GameObject.Find("A*").GetComponent<GridManager>();
+        gridScript = GameObject.Find("AStar").GetComponent<GridManager>();
         groundMask = ~LayerMask.GetMask("Selectable");
         selectableMask = LayerMask.GetMask("Selectable");
 

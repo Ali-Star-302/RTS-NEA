@@ -68,7 +68,7 @@ public class UnitMenuManager : MonoBehaviour
 
     public void ConfirmButton()
     {
-        SceneManager.LoadScene("Procedural Generation");
+        SceneManager.LoadScene("Battle");
     }
 
     public void BackToMenu()

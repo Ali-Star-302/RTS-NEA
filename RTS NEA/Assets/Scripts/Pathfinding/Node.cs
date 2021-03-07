@@ -11,9 +11,9 @@ public class Node : IHeapElement<Node>
     public int gridX, gridY, gridZ;
     public int gScore;
     public int hScore;
-    
+    public float steepness;
+
     int heapIndex;
-    float steepness;
 
     public Node(bool _walkable, Vector3 _worldPos, int _gridX, int _gridY, int _gridZ, int _penalty, float _steepness)
     {

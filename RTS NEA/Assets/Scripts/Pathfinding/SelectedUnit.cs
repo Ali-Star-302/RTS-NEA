@@ -11,13 +11,11 @@ public class SelectedUnit : MonoBehaviour
     Vector3 targetPosition;
     Vector3 gizmoPos;
     Unit unitScript;
-    GridManager gridManager;
     bool inFormation = false;
 
 
     void Start()
     {
-        gridManager = GameObject.Find("A*").GetComponent<GridManager>();
         unitScript = GetComponent<Unit>();
     }
 

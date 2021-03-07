@@ -26,12 +26,14 @@ public class UnitManager : MonoBehaviour
     public float pikemanCost;
     public float archerCost;
     public float cavalryCost;
+    public float steepnessLimit;
 
     public LayerMask grassMask;
     public LayerMask roadMask;
 
+    GridManager gridManager;
     LayerMask spawnableMask;
-    Vector3 pikeman1Spawn, archer1Spawn, cavalry1Spawn, pikeman2Spawn, archer2Spawn, cavalry2Spawn;
+    Vector3[] pikemanSpawn, archerSpawn, cavalrySpawn;
 
     private void Awake()
     {
@@ -42,9 +44,10 @@ public class UnitManager : MonoBehaviour
         teamTwoMoney = maxMoney;
     }
 
+    ///<summary> Increments/decrements the number of units and updates the team money </summary>
     public void ChangeUnit(int value, int team, string unitType)
     {
-        float unitCost = GetUnitCost(unitType);
+        float unitCost = GetUnitCost(unitType) * Mathf.Abs(value);
 
         if (team == 1)
         {
@@ -78,96 +81,147 @@ public class UnitManager : MonoBehaviour
         }
     }
 
-    Vector3 FindUnitSpawnPosition(int team, string unitName)
+    ///<summary> Returns the array of positions for the formation of a unit type </summary>
+    Vector3[] FindUnitSpawnPositions(string unitName, Vector3 position, Dictionary<string, int> unitDict)
+    {
+        Vector3[] spawnPositions = new Vector3[unitDict[unitName]];
+        int unitCount = unitDict[unitName];
+        
+        for (int i = 0; i < unitCount; i++)
+        {
+            Vector3 checkPosition = SelectedUnit.GetFormationPosition(position, unitCount, i);
+            checkPosition = new Vector3(checkPosition.x, 200f, checkPosition.z);
+
+            if (Physics.Raycast(checkPosition, Vector3.down, out RaycastHit hit, 500f, spawnableMask))
+            {
+                //If the point is walkable and isn't too steep it is suitable for spawning
+                if (gridManager.GetNodeFromPosition(hit.point).walkable && gridManager.GetNodeFromPosition(hit.point).steepness < steepnessLimit)
+                {
+                    spawnPositions[i] = hit.point;
+                }
+                else
+                {
+                    Debug.Log(unitName + " is null");
+                    return null;
+                }
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        return spawnPositions;
+    }
+
+    ///<summary> Sets the positions of each of the units in a team, returning whether it was successful or not </summary>
+    bool FindTeamSpawnPositions(int team)
     {
         bool spawnFound = false;
-        Vector3 spawnPosition = Vector3.zero;
+        Vector3 raycastPosition;
+        Vector3 hitposition;
+        int attemptCounter = 0;
+
         Dictionary<string, int> unitDict = new Dictionary<string, int>();
         if (team == 1)
             unitDict = teamOneUnits;
         else
             unitDict = teamTwoUnits;
 
-        //Continuously loops until a suitable spawn is found
         while (!spawnFound)
         {
+            //Debug.Log("Team: " + team + ", " + "Attempts: " + attemptCounter);
+            attemptCounter++;
+            if (attemptCounter > 100)
+            {
+                Debug.Log("Over 100 attempts :(");
+                return false;
+            }
+
+            float bounds = (GenerationValues.GetMapSize() * GenerationValues.GetChunkSize())/2; //Edges of the map
+
+            //Randomises the raycast position depending on the team
+            if (team == 1)
+                raycastPosition = new Vector3(Random.Range(-(bounds - 20f), bounds - 80f), 200f, Random.Range(30f, bounds - 20f));
+            else
+                raycastPosition = new Vector3(Random.Range(-(bounds - 20f), bounds - 80f), 200f, Random.Range(-30f, -(bounds - 20f)));
+
             RaycastHit hit;
-            if (Physics.Raycast(position, Vector3.down, out hit, 500f, spawnableMask))
+            if (Physics.Raycast(raycastPosition, Vector3.down, out hit, 500f))
             {
 
-            }
-
-            for (int i = 0; i < unitDict[unitName]; i++)
-            {
-
+                if (gridManager.GetNodeFromPosition(hit.point).walkable && gridManager.GetNodeFromPosition(hit.point).steepness < steepnessLimit)
+                {
+                    hitposition = hit.point;
+                    pikemanSpawn = FindUnitSpawnPositions("Pikeman", hitposition, unitDict); //Finds spawn formation for pikemen
+                    if (pikemanSpawn != null || unitDict["Pikeman"] == 0)
+                    {
+                        hitposition += Vector3.right * 30f;
+                        archerSpawn = FindUnitSpawnPositions("Archer", hitposition, unitDict); //Finds spawn formation for archers
+                        if (archerSpawn != null || unitDict["Archer"] == 0)
+                        {
+                            hitposition += Vector3.right * 30f;
+                            cavalrySpawn = FindUnitSpawnPositions("Cavalry", hitposition, unitDict); //Finds spawn formation for cavalry
+                            if (cavalrySpawn != null || unitDict["Cavalry"] == 0)
+                            {
+                                spawnFound = true;
+                                Debug.Log("Team: " + team + " spawn found");
+                            }
+                        }
+                    }
+                }
             }
         }
 
-        return spawnPosition;
+        return true;
     }
 
-    void FindTeamSpawnPositions(int team)
-    {
-        bool spawnFound = false;
-        while (!spawnFound)
-        {
-
-        }
-    }
-
+    ///<summary> Spawns a unit at the given position and sets up its team variable </summary>
     void InstantiateUnit(GameObject unitPrefab, int team, Vector3 position)
     {
-        //position = new Vector3(position.x, 150, position.z);
+        position = new Vector3(position.x, position.y + 5, position.z);
 
         GameObject temp;
         temp = Instantiate(unitPrefab, position, Quaternion.identity);
         temp.GetComponent<Unit>().team = team;
     }
-    void InstantiateUnit(GameObject unitPrefab, int team)
-    {
-        GameObject temp;
-        temp = Instantiate(unitPrefab, new Vector3(0, 100, 0), Quaternion.identity);
-        temp.GetComponent<Unit>().team = team;
-    }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name == "Procedural Generation")
+        //If the loaded scene is the battle scene units are spawned
+        if (scene.name == "Battle")
         {
-            Vector3[] spawnPositions;
-            //FindSpawnPosition(1, "Pikeman");
-            FindTeamSpawnPositions(1);
+            gridManager = GameObject.Find("AStar").GetComponent<GridManager>();
 
-            //Team 1
-            for (int i = 0; i < teamOneUnits["Pikeman"]; i++)
+            for (int _team = 1; _team <= 2; _team++)
             {
-                InstantiateUnit(pikemanPrefab, 1, SelectedUnit.GetFormationPosition(Vector3.zero, teamOneUnits["Pikeman"], i));
-            }
-            for (int i = 0; i < teamOneUnits["Archer"]; i++)
-            {
-                InstantiateUnit(archerPrefab, 1);
-            }
-            for (int i = 0; i < teamOneUnits["Cavalry"]; i++)
-            {
-                InstantiateUnit(cavalryPrefab, 1);
-            }
+                Dictionary<string, int> unitDict = new Dictionary<string, int>();
+                if (_team == 1)
+                    unitDict = teamOneUnits;
+                else
+                    unitDict = teamTwoUnits;
 
-            //Team 2
-            for (int i = 0; i < teamTwoUnits["Pikeman"]; i++)
-            {
-                InstantiateUnit(pikemanPrefab, 2);
-            }
-            for (int i = 0; i < teamTwoUnits["Archer"]; i++)
-            {
-                InstantiateUnit(archerPrefab, 2);
-            }
-            for (int i = 0; i < teamTwoUnits["Cavalry"]; i++)
-            {
-                InstantiateUnit(cavalryPrefab, 2);
+                //Spawns each of the unit classes according to the random formations given to them
+                if (FindTeamSpawnPositions(_team))
+                {
+                    for (int i = 0; i < unitDict["Pikeman"]; i++)
+                    {
+                        InstantiateUnit(pikemanPrefab, _team, pikemanSpawn[i]);
+                    }
+                    for (int i = 0; i < unitDict["Archer"]; i++)
+                    {
+                        InstantiateUnit(archerPrefab, _team, archerSpawn[i]);
+                    }
+                    for (int i = 0; i < unitDict["Cavalry"]; i++)
+                    {
+                        InstantiateUnit(cavalryPrefab, _team, cavalrySpawn[i]);
+                    }
+                }
             }
         }
     }
 
+    ///<summary> Gets the cost of units from the string name </summary>
     float GetUnitCost(string unitName)
     {
         float value;

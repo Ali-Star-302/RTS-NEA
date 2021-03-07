@@ -12,6 +12,6 @@ EditorBuildSettings:
     path: Assets/Scenes/Unit Selection.unity
     guid: 80c551bd1d3f10249956dcb45cde2f55
   - enabled: 1
-    path: Assets/Scenes/Procedural Generation.unity
+    path: Assets/Scenes/Battle.unity
     guid: 26ce41e4b8653664eabe020508bd37b3
   m_configObjects: {}
