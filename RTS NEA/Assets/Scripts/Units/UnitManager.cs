@@ -34,6 +34,7 @@ public class UnitManager : MonoBehaviour
     GridManager gridManager;
     LayerMask spawnableMask;
     Vector3[] pikemanSpawn, archerSpawn, cavalrySpawn;
+    Vector3 cameraPosition;
 
     private void Awake()
     {
@@ -166,6 +167,8 @@ public class UnitManager : MonoBehaviour
                             {
                                 spawnFound = true;
                                 Debug.Log("Team: " + team + " spawn found");
+                                if (team == 1)
+                                    cameraPosition = raycastPosition;
                             }
                         }
                     }
@@ -218,6 +221,9 @@ public class UnitManager : MonoBehaviour
                     }
                 }
             }
+
+            Transform cameraController = GameObject.Find("Camera Rig").transform;
+            cameraController.position = new Vector3(cameraPosition.x, cameraController.position.y, cameraPosition.z) + Vector3.right*40f;
         }
     }
 

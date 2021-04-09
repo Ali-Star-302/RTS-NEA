@@ -52,18 +52,4 @@ public static class Utilities
 
         return Rect.MinMaxRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
     }
-
-    /*public static Bounds GetViewportBounds(Camera camera, Vector3 screenPosition1, Vector3 screenPosition2)
-    {
-        Vector3 v1 = Camera.main.ScreenToViewportPoint(screenPosition1);
-        Vector3 v2 = Camera.main.ScreenToViewportPoint(screenPosition2);
-        Vector3 min = Vector3.Min(v1, v2);
-        Vector3 max = Vector3.Max(v1, v2);
-        min.z = camera.nearClipPlane;
-        max.z = camera.farClipPlane;
-
-        Bounds bounds = new Bounds();
-        bounds.SetMinMax(min, max);
-        return bounds;
-    }*/
 }

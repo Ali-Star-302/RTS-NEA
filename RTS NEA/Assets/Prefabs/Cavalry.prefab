@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 2039319792018877515}
   - component: {fileID: 2039319792018877514}
   - component: {fileID: 2039319792018877513}
-  - component: {fileID: 2039319792018877512}
   - component: {fileID: 2039319792018877527}
   m_Layer: 11
   m_Name: Cavalry
@@ -123,18 +122,6 @@ MonoBehaviour:
   healthManager: {fileID: 2396346900389809518}
   selectionCircle: {fileID: 6997692455131551240}
   followingPath: 0
---- !u!114 &2039319792018877512
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2039319792018877526}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0bf238f0b830d264ab5c6a659d420924, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!54 &2039319792018877527
 Rigidbody:
   m_ObjectHideFlags: 0

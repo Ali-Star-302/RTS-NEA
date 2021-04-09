@@ -22,7 +22,6 @@ public class CameraController : MonoBehaviour
     public Quaternion newRotation;
     public Vector3 newZoom;
 
-    //public Vector3 dragStartPosition, dragCurrentPosition;
     public Vector3 rotateStartPosition, rotateCurrentPosition;
 
     float verticalOffset;
@@ -38,28 +37,6 @@ public class CameraController : MonoBehaviour
         newPosition = transform.position;
         newRotation = transform.rotation;
         newZoom = cameraTransform.localPosition;
-    }
-
-    void Update()
-    {
-        /*
-        //Follows an object unless there isnt a target to follow
-        if (followTransform != null)
-        {
-            transform.position = followTransform.position;
-            transform.position = new Vector3(transform.position.x, transform.position.y + verticalOffset, transform.position.z);
-        }
-        else
-        {
-            MouseInput();
-            KeyboardInput();
-        }
-        
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            newPosition = new Vector3(followTransform.position.x, followTransform.position.y + verticalOffset, followTransform.position.z);
-            followTransform = null;
-        }*/
     }
 
     void LateUpdate() //Uses late update to ensure the camera is moved after all other code has been executed, reducing potential jitteriness
@@ -102,23 +79,6 @@ public class CameraController : MonoBehaviour
         {
             newZoom += Input.mouseScrollDelta.y * zoomAmount * 2;
         }
-
-        #region Mouse rotation
-        /*
-        //Rotate using middle mouse
-        if (Input.GetMouseButtonDown(2))
-        {
-            rotateStartPosition = Input.mousePosition;
-        }
-        if (Input.GetMouseButton(2))
-        {
-            rotateCurrentPosition = Input.mousePosition;
-
-            Vector3 difference = rotateStartPosition - rotateCurrentPosition;
-            rotateStartPosition = rotateCurrentPosition;
-            newRotation *= Quaternion.Euler(Vector3.up * (-difference.x / 5f));
-        }*/
-        #endregion
     }
 
 
@@ -140,16 +100,6 @@ public class CameraController : MonoBehaviour
 
         newPosition += Input.GetAxis("Vertical") * transform.forward * movementSpeed;
         newPosition += Input.GetAxis("Horizontal") * transform.right * movementSpeed;
-
-        //Rotation
-        /*if (Input.GetKey(KeyCode.Q))
-        {
-            newRotation *= Quaternion.Euler(Vector3.up * -rotationAmount);
-        }
-        if (Input.GetKey(KeyCode.E))
-        {
-            newRotation *= Quaternion.Euler(Vector3.up * rotationAmount);
-        }*/
 
         //Zoom
         if (Input.GetKey(KeyCode.R))
